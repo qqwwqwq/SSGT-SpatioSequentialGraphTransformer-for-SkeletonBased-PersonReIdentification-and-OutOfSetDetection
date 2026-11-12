@@ -86,7 +86,7 @@ python -m zipfile -e /path/to/downloads/SSGT-WUT-raw.zip /path/to/ssgt_data
 python -m zipfile -e /path/to/downloads/SSGT-KGBD-raw.zip /path/to/ssgt_data
 ```
 
-Install the source dependencies using the [installation instructions](../README.md#installation).
+Install the source dependencies using the [quick-start instructions](../README.md#quick-start).
 From the source directory, prepare a separate output root:
 
 ```bash
