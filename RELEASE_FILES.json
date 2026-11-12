@@ -69,6 +69,8 @@
   "docs/verification/test-suite-python37.json",
   "docs/verification/test-suite-random-seed-python310.json",
   "docs/verification/test-suite-random-seed-python37.json",
+  "docs/verification/test-suite-temporal-encoding-python310.json",
+  "docs/verification/test-suite-temporal-encoding-python37.json",
   "docs/verification/wut_exp_01.json",
   "docs/verification/wut_exp_02.json",
   "docs/verification/wut_exp_03.json",

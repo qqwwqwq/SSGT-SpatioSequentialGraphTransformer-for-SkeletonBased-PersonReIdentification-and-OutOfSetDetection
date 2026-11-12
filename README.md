@@ -196,9 +196,11 @@ Explicit seeds do not guarantee identical results across devices or versions.
 The following measurements were obtained on 2026-11-12 with the **previous
 fixed-seed version**, using seed 42 on the three main N=6 settings. They are
 retained as historical validation evidence. The full training benchmarks have
-**not been rerun with the new random-seed defaults**. Each selected checkpoint
-was evaluated again after loading; measurements remain separate from paper
-reference values.
+**not been rerun with the new random-seed defaults or the subsequent
+temporal-eigenbasis determinism fix**. Each selected checkpoint was evaluated
+again after loading; measurements remain separate from paper reference values.
+Saved checkpoints retain their recorded temporal encoding (`time_pe`) when loaded;
+the fix changes its construction for new models, not the stored checkpoint values.
 
 | Dataset | Paper R1 / R5 / mAP (%) | Local R1 / R5 / mAP (%) |
 | --- | --- | --- |
@@ -213,9 +215,12 @@ not establish an exact reproduction of the paper's numerical results.
 A separate fresh WUT OOS trial reached **98.49% AUROC / 6.12% FPR95**
 with K=1 and P=95. It is one training trial, not a five-trial mean.
 
-The current **80-test regression suite passes in both CPU environments**, including
-generated-seed recording and explicit replay. These checks are separate from
-the earlier full GPU benchmarks. The [validation report](VALIDATION.md) links
+The current **81-test regression suite passes locally in both CPU environments**,
+including repeated temporal-eigenbasis construction and strict explicit-seed
+replay. See the [Python 3.10](docs/verification/test-suite-temporal-encoding-python310.json)
+and [Python 3.7](docs/verification/test-suite-temporal-encoding-python37.json)
+records. These checks are separate from the earlier full GPU benchmarks.
+The [validation report](VALIDATION.md) links
 the test evidence and provides exact training limits, data and checkpoint hashes,
 actual metrics, and unresolved differences. The reported GPU results are
 individual fixed-seed checks, not a complete repetition of every paper table
@@ -360,8 +365,8 @@ python tools/build_release.py --output-dir ../dist
 
 Source archives contain only the explicit `RELEASE_FILES.json` entries. Datasets,
 checkpoints, private experiment logs, local environments, videos, and Cursor
-conversation history are excluded. Upload the contents of this directory as the
-GitHub repository root. Load only trusted checkpoint and NumPy object-array files.
+conversation history are excluded. Load only trusted checkpoint and NumPy
+object-array files.
 
 ## Limitations
 

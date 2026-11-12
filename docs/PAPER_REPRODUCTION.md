@@ -168,6 +168,13 @@ training. Evaluation prefers this saved basis and records its source and hash.
 Older files without the field recompute it from the graph; such files do not
 fully pin the numerical positional encoding across dependency versions.
 
+New models construct the small temporal graph's eigenbasis with NumPy's dense
+symmetric eigensolver. This corrects unseeded sparse-eigensolver initialization
+that caused explicit-seed replay to fail with SciPy 1.17. Existing checkpoints
+restore their recorded `time_pe` buffer from the model state; its dimensions and
+state key are unchanged. The full training measurements in `VALIDATION.md`
+predate this correction and have not been rerun with it.
+
 ## Optional verification of historical OOS trials
 
 The ten portable manifests under `config/trials/` describe the five WUT and five KGBD trials used by the archived OOS experiments. They contain no machine-specific absolute paths and require no access to the original experiment logs for preparation.

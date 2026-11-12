@@ -1,21 +1,32 @@
 # Measured validation records
 
-This directory separates current CPU regression evidence from the earlier
+This directory separates recorded CPU regression evidence from the earlier
 training and GPU measurements. Published reference values remain in
 `config/paper_targets.json`.
 
-The [Python 3.10](test-suite-random-seed-python310.json) and
-[Python 3.7](test-suite-random-seed-python37.json) records report the current
-**80-test suite**, passed on CPU on 2026-11-13 (Asia/Tokyo) in 24.38 and 14.18
-seconds respectively. They include exact source/configuration hashes and cover
-generated seeds, recorded seed replay, and synthetic CLI training/evaluation.
-They do not claim a full-dataset training rerun.
+The current [Python 3.10](test-suite-temporal-encoding-python310.json) and
+[Python 3.7](test-suite-temporal-encoding-python37.json) records report the
+**81-test suite after the temporal-eigenbasis determinism fix**. Both passed
+locally on CPU on 2026-11-13 (Asia/Tokyo), in 25.55 and 15.98 seconds respectively,
+with zero failures or errors. The checks include repeated temporal-eigenbasis
+construction, strict explicit-seed replay, and synthetic CLI training/evaluation.
+The records include exact source/configuration hashes and do not claim a full
+dataset training rerun or a remote CI result.
+
+The earlier [Python 3.10](test-suite-random-seed-python310.json) and
+[Python 3.7](test-suite-random-seed-python37.json) reports retain the **80-test
+suite before that fix**, which passed locally in 24.38 and 14.18 seconds.
+Their original source hashes and scope remain unchanged; they are historical
+regression evidence rather than results for the corrected implementation.
 
 The training, GPU evaluation, and retrieval measurements listed below were
 collected on 2026-11-12 with the previous fixed-seed version. Source defaults now
-generate run seeds; the full training benchmark has not been repeated under
-that policy. These earlier records retain their original seed settings, scores,
-and checksums and must not be relabeled as random-default benchmark results.
+generate run seeds, and new models use a deterministic temporal eigensolver.
+The full training benchmark has not been repeated after either change. Saved
+checkpoints load their recorded `time_pe` values; the reported metrics remain
+evidence for those weights. These earlier records retain their original seed
+settings, scores, and checksums and must not be relabeled as benchmarks of the
+updated training implementation.
 
 - `wut_exp_01.json` through `wut_exp_05.json` and the corresponding `kgbd` files
   retain the ten measured OOS trials, hashes, settings, and runtime versions.

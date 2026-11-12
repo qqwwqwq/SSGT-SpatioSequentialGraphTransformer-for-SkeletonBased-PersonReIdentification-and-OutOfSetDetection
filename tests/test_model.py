@@ -113,6 +113,44 @@ class ModelTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'at least two'):
             laplacian_position_encoding_np(1, 4)
 
+    def test_temporal_encoding_repeats_and_solves_the_chain_laplacian(self):
+        """The temporal basis must not depend on an eigensolver's private RNG."""
+        for length, width in ((2, 4), (4, 2), (6, 4), (12, 4), (18, 4)):
+            with self.subTest(length=length, width=width):
+                expected = laplacian_position_encoding_np(length, width)
+                self.assertEqual(expected.dtype, np.float32)
+                kept = min(width, length - 1)
+                self.assertEqual(expected.shape, (length, kept))
+                for _ in range(3):
+                    np.testing.assert_array_equal(
+                        laplacian_position_encoding_np(length, width), expected,
+                    )
+                adjacency = np.eye(length, k=1) + np.eye(length, k=-1)
+                inv_degree = np.diag(1.0 / np.sqrt(adjacency.sum(axis=1)))
+                laplacian = np.eye(length) - inv_degree @ adjacency @ inv_degree
+                eigenvalues = 1.0 - np.cos(
+                    np.pi * np.arange(1, kept + 1) / (length - 1),
+                )
+                np.testing.assert_allclose(
+                    laplacian @ expected, expected * eigenvalues, rtol=0, atol=1e-6,
+                )
+                np.testing.assert_allclose(
+                    expected.T @ expected, np.eye(kept), rtol=0, atol=1e-6,
+                )
+
+        # Reseeding trainable parameters must also reproduce every buffer;
+        # older ARPACK versions could change only time_pe between calls.
+        with torch.random.fork_rng(devices=[]):
+            torch.manual_seed(170315)
+            first = SSGT(J=19, T=4, H=8, n_heads=2, L=1,
+                         enc_k_spa=3, enc_k_time=2).state_dict()
+            torch.manual_seed(170315)
+            second = SSGT(J=19, T=4, H=8, n_heads=2, L=1,
+                          enc_k_spa=3, enc_k_time=2).state_dict()
+        self.assertEqual(first.keys(), second.keys())
+        for name, value in first.items():
+            torch.testing.assert_close(second[name], value, rtol=0, atol=0)
+
     def test_known_identity_prototypes_use_compressed_labels_and_require_samples(self):
         raw_ids = np.array([1, 1, 4, 4, 8, 8])
         one_hot = label_binarize(raw_ids, classes=[1, 4, 8])

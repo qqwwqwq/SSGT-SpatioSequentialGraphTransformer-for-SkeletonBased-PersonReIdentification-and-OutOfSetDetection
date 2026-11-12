@@ -48,6 +48,10 @@ Additional execution and portability corrections include:
 - Checkpoint loading restores temporal attention, position encoding, data
   variants, and the saved spatial eigenbasis when available. Model parameter
   keys are checked strictly. Missing eigenbases in old weights are disclosed.
+- New models construct the temporal Laplacian eigenbasis using a dense symmetric
+  eigensolver, avoiding the unseeded sparse-solver initialization exposed by
+  SciPy 1.17. Stored `time_pe` buffers still load unchanged from checkpoints.
+  Historical full training measurements predate this determinism correction.
 - OOS frame labels convert zero-based/one-based IDs once, including ID zero.
   Unknown sentinels are outside the complete known identity range.
 - New training builds one prototype per actual known identity. Historical OOS

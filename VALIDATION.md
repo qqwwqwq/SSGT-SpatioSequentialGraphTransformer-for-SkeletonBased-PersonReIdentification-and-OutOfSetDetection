@@ -1,6 +1,6 @@
 # Release validation
 
-GPU benchmark validation: 2026-11-12. Current CPU regression validation:
+GPU benchmark validation: 2026-11-12. Recorded CPU regression validation:
 2026-11-13 (Asia/Tokyo). Model scores below were calculated from data and weights,
 rather than copied from checkpoint score fields. Reference values are recorded
 separately in [paper_targets.json](config/paper_targets.json).
@@ -10,8 +10,17 @@ separately in [paper_targets.json](config/paper_targets.json).
 The training and GPU measurements below were collected on 2026-11-12 using the
 **previous fixed-seed version**. The source now generates run seeds by default.
 These historical records and their JSON files remain unchanged; the full
-training benchmark has **not been rerun under the new random-seed defaults**.
-Checks of the seed-policy changes are separate from these measured results.
+training benchmark has **not been rerun under the new random-seed defaults or
+the subsequent temporal-eigenbasis determinism fix**. The existing scores remain
+measurements of the recorded training runs and checkpoints.
+
+The initial GitHub Actions run exposed a seed-replay failure with SciPy 1.17:
+the temporal Laplacian's sparse eigensolver used an unseeded initialization.
+New model construction now uses NumPy's dense symmetric eigensolver for this
+small graph, removing that source of randomness. Model dimensions and checkpoint
+keys are unchanged. Loading a saved `time_pe` buffer restores its recorded values,
+so this correction does not replace the temporal encoding in existing weights.
+The earlier full-dataset measurements do not validate retraining with the fix.
 
 Because the source code now uses randomly generated seeds by default, results may differ slightly from those reported in the paper.
 
@@ -116,11 +125,13 @@ The modern dependency ranges describe the installation target. The GPU
 measurements use the archival environment; they do not establish numerical
 identity across newer NumPy/PyTorch versions or different hardware.
 
-The current **80-test public regression suite passes in both environments on
-CPU**: 24.38 seconds with Python 3.10.16 and 14.18 seconds with Python 3.7.13,
-with zero failures or errors. The [Python 3.10 record](docs/verification/test-suite-random-seed-python310.json)
-and [Python 3.7 record](docs/verification/test-suite-random-seed-python37.json)
-include package versions and exact source/configuration SHA-256 values.
+After the temporal-eigenbasis correction, the **81-test public regression suite
+passed locally in both recorded CPU environments**: 25.55 seconds with Python
+3.10.16 and 15.98 seconds with Python 3.7.13, with zero failures or errors.
+The [Python 3.10 record](docs/verification/test-suite-temporal-encoding-python310.json)
+and [Python 3.7 record](docs/verification/test-suite-temporal-encoding-python37.json)
+include package versions and exact source/configuration SHA-256 values. The suite
+checks repeated temporal-eigenbasis construction and strict explicit-seed replay.
 
 The suite covers data preparation, path/configuration handling, finite model
 gradients, reconstruction and contrastive losses, Algorithm 2, checkpoint
@@ -132,9 +143,13 @@ the recorded checkpoint seed, and retrains on CPU with that explicit seed; all
 model tensors and metrics match bit for bit within each tested environment.
 Additional tests check generated OOS seeds, metadata, seed propagation, and replay.
 
-The previous fixed-seed version passed 68 tests. The new 80-test result verifies
-the seed-policy changes and the public CPU workflow; it does not repeat the full
-GPU training benchmarks or establish cross-environment numerical identity.
+Earlier evidence is retained separately: the fixed-seed version passed 68 tests,
+and the version before the temporal-eigenbasis correction passed 80 tests in
+24.38 seconds ([Python 3.10](docs/verification/test-suite-random-seed-python310.json))
+and 14.18 seconds ([Python 3.7](docs/verification/test-suite-random-seed-python37.json)).
+Those 80-test records apply to their listed source hashes and do not establish
+compatibility with SciPy 1.17. Neither the earlier nor current CPU suite repeats
+the full GPU training benchmarks or proves cross-environment numerical identity.
 
 ```bash
 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 \

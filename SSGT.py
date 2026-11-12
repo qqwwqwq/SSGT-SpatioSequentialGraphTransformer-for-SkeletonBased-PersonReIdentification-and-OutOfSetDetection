@@ -21,14 +21,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-try:
-    from scipy.sparse.linalg import eigsh as sp_eigsh
-    _has_scipy = True
-except ImportError:
-    sp_eigsh = None
-    _has_scipy = False
-
-
 # =====================================================================
 # Temporal Position Encoding
 # =====================================================================
@@ -54,10 +46,10 @@ def laplacian_position_encoding_np(length: int, K: int) -> np.ndarray:
     with np.errstate(divide='ignore'):
         D_inv_sqrt = np.diag(1.0 / np.sqrt(np.maximum(deg, 1e-12)))
     L = np.eye(length) - D_inv_sqrt @ A @ D_inv_sqrt
-    if _has_scipy and length >= 3 and (K + 1) < length:
-        w, v = sp_eigsh(L, k=K + 1, which='SM')
-    else:
-        w, v = np.linalg.eigh(L)
+    # This chain graph is small and dense. Using a dense symmetric solver
+    # avoids ARPACK's independent random initialization, which is not
+    # controlled by the recorded training seed.
+    w, v = np.linalg.eigh(L)
     idx = np.argsort(w)
     v = v[:, idx]
     pos = v[:, 1:K + 1]
