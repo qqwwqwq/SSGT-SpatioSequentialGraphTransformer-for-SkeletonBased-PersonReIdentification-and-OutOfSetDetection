@@ -20,7 +20,8 @@ Duration: 3 min 21 s, with English narration and subtitles.
 
 https://github.com/user-attachments/assets/bb093a94-6c90-4a86-b90e-16c2bb76c52a
 
-You can also [open or download the MP4](https://github.com/user-attachments/assets/bb093a94-6c90-4a86-b90e-16c2bb76c52a?download=1).
+Enable sound in the player for the narration. You can also
+[download the original MP4](https://github.com/qqwwqwq/SSGT/raw/refs/heads/main/docs/media/video-RAL2026.mp4).
 
 ## Table of contents
 

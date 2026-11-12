@@ -35,5 +35,6 @@ reproduction_runs/
 *.pkl
 *.log
 *.mp4
+!docs/media/video-RAL2026.mp4
 *.mkv
 *.avi
