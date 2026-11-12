@@ -12,8 +12,19 @@
 *IEEE Robotics and Automation Letters*, 11(11), 12727–12734, 2026.
 [Paper](https://doi.org/10.1109/LRA.2026.3734851) · [Reproduction guide](docs/PAPER_REPRODUCTION.md) · [Data protocol](docs/DATA.md) · [Measured validation](VALIDATION.md)
 
+## Introduction video
+
+The supplementary video introduces SSGT, from skeleton acquisition and fusion to
+the model architecture, person re-identification, and out-of-set detection.
+Duration: 3 min 21 s, with English narration and subtitles.
+
+https://github.com/user-attachments/assets/bb093a94-6c90-4a86-b90e-16c2bb76c52a
+
+You can also [open or download the MP4](https://github.com/user-attachments/assets/bb093a94-6c90-4a86-b90e-16c2bb76c52a?download=1).
+
 ## Table of contents
 
+- [Introduction video](#introduction-video)
 - [Introduction](#introduction)
 - [Key features](#key-features)
 - [Dataset downloads](#dataset-downloads)
