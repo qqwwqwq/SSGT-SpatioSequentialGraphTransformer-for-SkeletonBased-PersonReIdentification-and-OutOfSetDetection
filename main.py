@@ -2,7 +2,7 @@
 
 This entry point combines task-specific JSON settings with command-line
 overrides. Numerical routines live in separate model, training, evaluation,
-and preprocessing modules, following the flat layout of the DualSOM reference.
+and preprocessing modules.
 
 Usage:
     python main.py --config params.json --task train

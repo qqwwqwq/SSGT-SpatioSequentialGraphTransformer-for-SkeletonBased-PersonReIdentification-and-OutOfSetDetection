@@ -59,6 +59,16 @@ from SSGT import SSGT
 CKPT_DEFAULT = ""
 
 
+def _score_histogram_path(save_plot, save_npy_base=""):
+    """Derive a histogram filename distinct from the distance-scatter image."""
+    if not save_plot:
+        return (save_npy_base.rstrip("/") if save_npy_base else "oos") + "_oos_score_hist.png"
+    scatter = Path(save_plot)
+    stem = (scatter.stem.replace("_oos_scatter", "_oos_score_hist")
+            if "_oos_scatter" in scatter.stem else scatter.stem + "_oos_score_hist")
+    return str(scatter.with_name(stem + scatter.suffix))
+
+
 DICP_WUT = {
     "Jacek": 1, "Aleks": 2, "Julia": 3, "Vibek": 4, "Mikolaj": 5, "Ania": 6, "Kasia": 7, "Martyna": 8,
     "Maria": 9, "MichalD": 10, "MichalJ": 11, "Ercem": 12, "Malgosia": 13, "Moncy": 14, "Juan": 15,
@@ -1005,7 +1015,7 @@ def _validate_spatial_pos_encoding(value, joint_count, encoding_width):
 
 
 def resolve_spatial_pos_encoding(model, computed_encoding):
-    """Prefer the checkpoint's spatial basis and describe any historical fallback.
+    """Use the saved spatial basis or compute it from the dataset graph.
 
     Args:
         model (SSGT): Model returned by load_checkpoint_model.
@@ -1015,10 +1025,9 @@ def resolve_spatial_pos_encoding(model, computed_encoding):
         np.ndarray: Validated spatial basis of shape (J, enc_k_spa).
 
     Notes:
-        Older checkpoints lack the basis. Their fallback remains the dataset
-        loader's eigendecomposition, whose sign and degenerate-eigenspace
-        orientation may vary between numerical-library versions. The selected
-        basis and provenance are recorded in model.spatial_pos_encoding_metadata.
+        If no basis is stored, the dataset loader supplies it. Eigenvector
+        orientation can vary between numerical-library versions. The selected
+        basis is recorded in model.spatial_pos_encoding_metadata.
     """
     persisted = getattr(model, 'checkpoint_spatial_pos_encoding', None)
     encoding = _validate_spatial_pos_encoding(
@@ -1615,9 +1624,7 @@ def main(argv=None):
         plt.title(f'ID vs OOS on score (k={int(args.unk_knn_k)}, σ={float(args.sigma_eval):.2f})')
         plt.legend(loc='best'); plt.grid(alpha=0.2); plt.tight_layout()
 
-        score_plot = (args.save_plot.replace('_oos_scatter', '_oos_score_hist')
-                      if args.save_plot else
-                      ( (args.save_npy_base.rstrip('/') if args.save_npy_base else 'oos') + '_oos_score_hist.png'))
+        score_plot = _score_histogram_path(args.save_plot, args.save_npy_base)
         os.makedirs(os.path.dirname(score_plot) or ".", exist_ok=True)
         plt.savefig(score_plot, dpi=170); plt.close()
         print(f"[Plot] Saved score histogram -> {score_plot}")

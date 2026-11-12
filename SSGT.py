@@ -1,9 +1,7 @@
 """Skeleton graph encoder used by SSGT.
 
 The joint-level encoder combines spatial and temporal self-attention with
-structure and trajectory reconstruction heads. Parameter names and tensor
-layouts are retained from the research implementation so existing checkpoints
-can be loaded without converting their state dictionaries.
+structure and trajectory reconstruction heads.
 
 Tensor Conventions:
     B: Batch size; T: sequence length; J: joint count; H: hidden dimension.

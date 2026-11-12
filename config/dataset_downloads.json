@@ -1,27 +1,16 @@
 {
   "archives": [
     {
-      "all_archive_members_verified": true,
       "bytes": 404994575,
-      "checksum_scope": "Locally packaged release archive; verify downloaded bytes against this digest.",
       "contents": {
         "checkpoint_files_included": false,
         "data_file_count": 2510,
         "data_root": "raw/WUT",
         "dataset": "WUT",
-        "description": "25 identities, 293 sequences; 879 fused skeleton NPY files covering 5C/3C/2C and 1,631 original camera skeleton CSV files. Use fusion_master.npy, fusion_master_3c.npy, or fusion_master_2c.npy with the SSGT converter. The WUT-1 alternative collection is not included."
+        "description": "Fused 19-joint skeleton arrays for 5C, 3C, and 2C, plus original camera skeleton CSV files. Use fusion_master.npy, fusion_master_3c.npy, or fusion_master_2c.npy with the converter."
       },
-      "download_link_source": "Provided by the repository owner.",
       "download_url": "https://drive.google.com/file/d/1PBWrIvwNyMTTh-ZoyUujaY6j6vtHPlhH/view?usp=sharing",
       "filename": "SSGT-WUT-raw.zip",
-      "hosted_link_check": {
-        "anonymous_download_head_http_status": 200,
-        "anonymous_view_http_status": 200,
-        "checked_date": "2026-11-13",
-        "declared_bytes_match": true,
-        "filename_matches": true,
-        "remote_sha256_verified": false
-      },
       "id": "WUT-raw",
       "internal_manifest": "dataset_info/WUT-raw/MANIFEST.json",
       "payload_file_count": 2510,
@@ -29,27 +18,16 @@
       "uncompressed_payload_bytes": 1145636059
     },
     {
-      "all_archive_members_verified": true,
       "bytes": 248792616,
-      "checksum_scope": "Locally packaged release archive; verify downloaded bytes against this digest.",
       "contents": {
         "checkpoint_files_included": false,
         "data_file_count": 1644,
         "data_root": "raw/KGBD",
         "dataset": "KGBD",
-        "description": "164 identities, 822 sequence TXT files and their 822 fusion_master.npy caches. Both formats are retained because the released historical OOS manifests reference known cache files and unknown TXT files."
+        "description": "KGBD text skeleton sequences and matching fusion_master.npy arrays for preprocessing and OOS splits."
       },
-      "download_link_source": "Provided by the repository owner.",
       "download_url": "https://drive.google.com/file/d/1MUjeOndmCqsn2VPEVC_mmB1jQ1hszsDo/view?usp=sharing",
       "filename": "SSGT-KGBD-raw.zip",
-      "hosted_link_check": {
-        "anonymous_download_head_http_status": 200,
-        "anonymous_view_http_status": 200,
-        "checked_date": "2026-11-13",
-        "declared_bytes_match": true,
-        "filename_matches": true,
-        "remote_sha256_verified": false
-      },
       "id": "KGBD-raw",
       "internal_manifest": "dataset_info/KGBD-raw/MANIFEST.json",
       "payload_file_count": 1644,
@@ -61,8 +39,6 @@
     "filename": "dataset_SHA256SUMS",
     "repository_path": "config/dataset_SHA256SUMS"
   },
-  "created_date": "2026-11-13",
-  "dataset_hosting": "Google Drive links provided by the repository owner; the publishing workflow does not upload dataset binaries.",
   "distribution_scope": "WUT and KGBD raw inputs only; no prepared dataset archive is distributed.",
   "excluded_datasets": [
     {

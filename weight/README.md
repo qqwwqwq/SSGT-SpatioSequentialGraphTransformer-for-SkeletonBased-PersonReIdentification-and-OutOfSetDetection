@@ -1,8 +1,7 @@
 # Model checkpoints
 
-Training creates `<dataset>/<configuration>/best.ckpt` here.
-Pretrained weights are not included in the source distribution.
-Pass `--ckpt /path/to/best.ckpt` when evaluating an existing model.
+Training writes `<dataset>/<configuration>/best.ckpt` here. No pretrained weights
+are provided; train a model using the [README instructions](../README.md).
 
-The `model_state` and `args` checkpoint fields retain their original meanings.
-`TranSG` remains an alias of `SSGT` for source compatibility.
+Use `--model-dir /path/to/weights` to choose another checkpoint root and
+`--ckpt /path/to/best.ckpt` for evaluation. Load only trusted checkpoints.

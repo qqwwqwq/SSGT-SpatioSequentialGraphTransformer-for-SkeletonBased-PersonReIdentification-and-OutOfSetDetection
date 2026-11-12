@@ -1,4 +1,4 @@
-"""KS20 MAT parsing, recovered splits, and end-to-end coordinate regression."""
+"""KS20 MAT parsing, configured splits, and coordinate conversion tests."""
 
 import contextlib
 import hashlib

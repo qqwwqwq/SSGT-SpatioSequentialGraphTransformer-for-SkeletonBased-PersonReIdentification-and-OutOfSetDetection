@@ -27,6 +27,7 @@ weight/*
 results/*
 !results/README.md
 reproduction_runs/
+runs/
 *.npy
 *.npz
 *.ckpt

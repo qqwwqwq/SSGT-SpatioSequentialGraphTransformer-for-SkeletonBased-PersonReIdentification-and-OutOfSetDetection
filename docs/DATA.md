@@ -1,273 +1,212 @@
-# Data preparation and protocol
+# Data preparation
 
-The source release includes raw-data converters for WUT, KGBD, and KS20, explicit WUT/KS20 split configurations, and ten recorded OOS trial manifests. Readers can prepare their own copy of the datasets, train SSGT, and evaluate the resulting checkpoints. Training does not require archived weights. Raw skeletons and checkpoint binaries are not bundled in the source archives. WUT and KGBD raw archives are packaged separately; download links and extraction instructions are in [DOWNLOADS.md](DOWNLOADS.md).
-
-## Separate raw dataset packages
-
-Only `SSGT-WUT-raw.zip` and `SSGT-KGBD-raw.zip` are supplied in the dataset
-delivery. They extract to `raw/WUT/` and `raw/KGBD/` below your chosen directory.
-These folders are inputs to the converters. Generate the prepared arrays locally
-before training; no prepared-data archive is distributed.
-
-Each package includes `dataset_info/<package>/MANIFEST.json` and
-`DATASET_README.md`. See [DOWNLOADS.md](DOWNLOADS.md) for checksum verification,
-extraction, and preprocessing commands. OOS trials can be prepared separately
-from these raw packages with the explicit manifests in `config/trials/`.
-
-KS20 is excluded from dataset delivery because its original notice requires
-permission for redistribution. The KS20 converter and protocol below remain
-available for users who obtain the data independently. Dataset access terms
-are separate from the source-code license.
+Prepare raw skeletons before training. Download WUT or KGBD using the
+[download guide](DOWNLOADS.md). KS20 must be obtained independently because its
+dataset notice requires permission for redistribution. No pretrained weights
+or prepared-data package is provided.
 
 ## Locations and commands
 
-`paths.data_root()` defaults to `Datas/` beside the source files. Set `SSGT_DATA_DIR` or use `main.py --data-dir` to select another prepared-data root. Raw input paths are supplied explicitly and may be anywhere readable; preprocessing does not move input directories or write fusion caches into them.
-
-Run from the release directory:
+Run from the repository root:
 
 ```bash
-python main.py --task preprocess --dataset WUT \
-  --input_dir /path/to/WUT --unknown_dir /path/to/Unknown --length 6
-
-python main.py --task preprocess --dataset KGBD \
-  --input_dir '/path/to/KGBD/kinect gait raw dataset' \
-  --unknown_dir /path/to/KGBD/Unknown --length 6
-
-python main.py --task preprocess --dataset KGBD \
-  --input_dir '/path/to/KGBD/kinect gait raw dataset' \
-  --skip_unknown --length 6 --src_fps 30 --dst_fps 10 --data_subdir 6_10fps
-
-python main.py --task preprocess --dataset KS20 \
-  --input_dir /path/to/KS20 --length 6
+python main.py --task preprocess --dataset WUT --length 6 \
+  --input_dir /path/to/raw/WUT --data-dir /path/to/prepared
+python main.py --task preprocess --dataset KGBD --length 6 \
+  --input_dir /path/to/raw/KGBD --data-dir /path/to/prepared
+python main.py --task preprocess --dataset KS20 --length 6 \
+  --input_dir /path/to/KS20 --data-dir /path/to/prepared
 ```
 
-The same options work with `python preprocessing.py`. `--fr` is an alias for `--length`. For WUT/KGBD, `--fusion_file` selects the per-sequence array filename. `--out_tag 10fps` is the legacy equivalent of `--data_subdir 6_10fps` for a six-frame window. `--clip_num` retains the original trimming behavior: the default is zero for WUT/KGBD and ten frames from each end for KS20.
+The output root defaults to `Datas/`; override it with `--data-dir` or
+`SSGT_DATA_DIR`. Pass the root, not its `WUT/6/` subdirectory. Raw inputs are
+read only. Use a fresh output directory when changing splits, because preprocessing
+does not remove files from previous runs.
 
-Random seeds do not replace split definitions. WUT and KS20 use their fixed JSON assignments; explicit OOS trial manifests also retain their recorded identities and sequence choices. Random choices in training and evaluation use the seed selected by their own entry point. See [the reproducibility note](../README.md#note-on-reproducibility) for replay options.
-
-The public datasets are WUT, KGBD, and KS20. All three use the prepared coordinate format below. Use a separate prepared-data root or variant directory for each experimental protocol.
+`--length` selects the window length; `--data_subdir` names a separate variant.
+For WUT/KGBD, `--fusion_file` selects the fusion array and `--unknown_dir` supplies
+optional held-out inputs. `--skip_unknown` disables unknown preparation.
+See [hyperparameters](HYPERPARAMETERS.md) for matching training presets.
 
 ## WUT inputs and split
 
 ```text
-/path/to/WUT/
-  Aleks/
+WUT/
+  Jacek/
     sequence_00/fusion_master.npy
     sequence_01/fusion_master.npy
     ...
-  Jacek/
-    sequence_00/fusion_master.npy
+  Aleks/
     ...
-/path/to/Unknown/
-  person/
-    sequence/fusion_master.npy
 ```
 
-The separate WUT raw package contains 293 sequences with
-`fusion_master.npy` (5C), `fusion_master_3c.npy` (3C), and
-`fusion_master_2c.npy` (2C) for each sequence. Use `--fusion_file` to select one
-variant and `--data_subdir 6_3c` or `6_2c` for the corresponding N=6 preset.
-The included per-camera CSV files are retained source data; the converter uses
-the fused NPY arrays. See [the camera-variant commands](DOWNLOADS.md#convert-raw-data).
+Keep original identity directory names: the converter maps them to IDs 1–25
+and skips unrecognized names. Each sequence contains `fusion_master.npy` (5C),
+`fusion_master_3c.npy` (3C), and `fusion_master_2c.npy` (2C). Select the matching
+file and output variant for the chosen preset; see the
+[example commands](DOWNLOADS.md#convert-raw-data).
 
-The packaged fusion arrays have shape `(frames, 19, 4)` and dtype `float64`.
-The converter exports channels 0, 1, and 2 as X, Y, and Z. It does not export the
-fourth channel, but its inherited NaN-window filter examines **all channels**:
-a NaN in that channel can still remove a window. Preserve the original array
-when reproducing the recorded preparation. More generally, the converter
-accepts `(frames, 19, C)` with at least three channels. The per-camera CSV files
-instead contain 32 joints in 128 columns, with headers such as
-`x0,y0,z0,p0,...,x31,y31,z31,p31`; they are not the fused 19-joint model input.
+Packaged fusion arrays have shape `(frames, 19, 4)` and dtype `float64`.
+The converter exports the first three channels as XYZ, but checks **all channels**
+for NaNs when filtering windows. Do not remove the fourth channel before conversion.
+Arrays with at least three channels are accepted. The accompanying camera CSVs
+contain 32 joints and 128 columns; the converter does not regenerate fusion arrays
+from these CSVs.
 
-Unknown data may also be supplied as sequence directories directly under the
-unknown root, or as one fusion file directly under that root. Raw identity
-directory names must match the original WUT name-to-ID mapping in
-`process_dataset_WUT`; unrecognized names are skipped. For a custom dataset,
-adapt that mapping explicitly.
+[`wut_split.json`](../config/wut_split.json) selects zero-based positions in each
+identity's alphabetically sorted sequence directories:
 
-`config/wut_split.json` replaces the original `random3.npy` array `[8, 0, 1]` without changing its meaning:
+- Gallery: positions 8 and 0.
+- Probe: position 1.
+- Training: all remaining positions, including extra recordings.
 
-- Gallery: zero-based positions **8 and 0** in each identity's alphabetically sorted sequence directories.
-- Probe: zero-based position **1**.
-- Training: every other sequence position.
+Keep at least nine sequence directories and the selected fusion files.
+`--split_file` accepts an alternative JSON with two distinct gallery positions
+and one distinct probe position. Short or invalid recordings can leave an identity
+without probe windows; the supplied Julia probe sequence, for example, has no
+valid six-frame windows.
 
-These are sequence-list positions, not frame indices or literal folder names. The default assumes at least nine sequence directories per identity, with the selected fusion files present. Use `--split_file /path/to/split.json` for an explicit alternative with two distinct gallery indices and one distinct probe index. A new split changes the experimental protocol.
-
-The archived WUT collection contains **293 sequences from 25 identities**: most identities have ten sequences, while Julia has 27, Moncy 19, Showni 19, and Vibek 18. Applying the recorded indices to the complete collection assigns 218 sequences to training, 50 to gallery, and 25 to probe. All additional sequences remain in training. The paper's 7:2:1 description therefore describes the typical ten-sequence identity; the aggregate archived ratio is 218:50:25, approximately 8.72:2:1. Do not truncate every identity to ten sequences when reproducing the recorded checkpoints.
-
-The selected Julia probe sequence produces **zero valid six-frame windows** after the original filtering. Consequently, all five archived WUT OOS trials omit original ID 3 from their prepared probe arrays, while retaining it in training and gallery. This concrete coverage limitation is preserved and recorded as `missing_known_ids.probe: [3]` in preparation provenance. The reconstruction does not invent replacement probe windows or silently select a different sequence.
-
-Known WUT identities use the original IDs 1–25. Unknown windows receive raw label 26. The unknown directory must be disjoint from the known data according to the intended experimental protocol; preprocessing does not choose or move held-out identities automatically.
+Unknown inputs may use `person/sequence/fusion_master.npy`, sequence folders
+directly below the unknown root, or a fusion file directly below that root.
+Their raw identity label is 26.
 
 ## KGBD inputs and split
 
 ```text
-/path/to/kinect gait raw dataset/
+KGBD/
   Person001/
     sequence_01.txt
+    sequence_01/fusion_master.npy
     sequence_02.txt
-    sequence_03.txt
-    sequence_04.txt
+    ...
   Person002/
     ...
-/path/to/KGBD/Unknown/
-  person/
-    sequence.txt
 ```
 
-Known-person directories must contain `.txt` sequence filenames. Each valid line has a leading joint field followed by semicolon-separated X, Y, and Z values; each frame has 20 joint records. If `PersonXXX/<sequence-stem>/<fusion_file>` already exists, preprocessing reads that array. Otherwise it parses the text directly, without creating a cache in the input directory. The separate raw package preserves both the 822 TXT sequences and their 822 existing fusion caches, since historical OOS manifests reference and hash the cache files for known identities.
+Each TXT frame contains 20 joint records, with a leading joint field followed by
+semicolon-separated X, Y, and Z values. The converter reads an existing
+`PersonXXX/<sequence-stem>/<fusion_file>` cache when present; otherwise it parses
+the TXT file without writing a cache. Keep both TXT and fusion files from the
+download: the supplied OOS manifests select specific source files.
 
-The original KGBD split selects two gallery sequences and one probe sequence independently per identity, leaving the others for training. Person015 uses one gallery and one probe sequence. Provide enough sequences to leave training data: normally at least four per identity, or three for Person015. The CLI defaults to `--seed -1`, which generates a new unsigned 32-bit seed from operating-system entropy, prints it, and records `requested_seed`, `resolved_seed`, and `seed_selection` in `<dataset>/<variant>/preprocessing_metadata.json` below the prepared-data root. Use `--seed N` to repeat the selection for the same sorted input filenames and software version. A generated seed can change KGBD sequence assignments. Retain the prepared arrays or the recorded seed when comparing runs.
+Two sequences per identity become gallery data and one becomes probe data;
+the rest become training data. Person015 uses one gallery and one probe sequence.
+Provide at least four sequences per identity, or three for Person015.
 
-The complete archived KGBD collection contains 822 text sequences across 164 identities. Its closed-set allocation is 331 training, 327 gallery, and 164 probe sequences, including the Person015 exception. For historical OOS checkpoints, use the released per-trial manifests: those manifests record the actual per-identity sequence choices from the logs, so reconstruction does not depend on guessing the old random seed.
+Sequence selection uses a new random seed by default. The converter prints it
+and saves it in `preprocessing_metadata.json` beside the prepared splits.
+Use `--seed N` to repeat a selection with the same input files and environment.
 
-KGBD unknown inputs are `.txt` files directly below the supplied unknown root or inside one level of person directories. The unknown path is never inferred from the current working directory. Unknown windows receive raw label 165, after the original 164 known identity IDs. `--skip_unknown` or `--skip_unknown=1` disables construction of the unknown split.
+Known labels are 1–164. Unknown inputs are TXT files directly below
+`--unknown_dir` or one level below it in person directories; their raw label is 165.
+The unknown path must be supplied explicitly.
 
 ## KS20 inputs and split
 
-The official KS20 collection contains five viewpoint folders: `frontal`, `left_diagonal`, `left_lateral`, `right_diagonal`, and `right_lateral`. Each contains 60 MATLAB files named `gc1_body1.mat`, `gc2_body1.mat`, and so on: three gait-cycle recordings for each of 20 identities. Supply all 300 files. The converter reports missing viewpoints or sequences instead of silently training on a partial collection.
+Supply `frontal`, `left_diagonal`, `left_lateral`, `right_diagonal`, and
+`right_lateral`, containing all 300 `gc*_body*.mat` files. The converter reads the
+nested `gc` MATLAB objects and keeps 25 Kinect v2 joints. Body numbers
+`1–4, 7–9, 11–17, 19–24` map in order to labels `0–19`.
 
-`ks20_preprocessing.py` reads the native nested `gc` MATLAB objects and preserves all 25 Kinect v2 joints. It uses the recorded joint type as the index, fills an entirely zero joint row from the previous frame when one exists, and converts coordinates to float32 before writing the original float64 coordinate format. Body numbers `1–4, 7–9, 11–17, 19–24` map in order to labels `0–19`.
+[`ks20_split.json`](../config/ks20_split.json) assigns one distinct gait-cycle
+recording to training, gallery, and probe per identity across all five views,
+for a 1:1:1 sequence ratio. `--split_file` can supply another assignment covering
+all identities with three distinct recording choices each.
 
-`config/ks20_split.json` records one distinct `gc1`/`gc2`/`gc3` setting for train, gallery, and probe for every identity. The same assignment applies across all five views, giving exactly **100 raw sequences per split** and the paper's 1:1:1 sequence ratio. These assignments were recovered by matching the existing prepared windows to the raw MAT files; their original random seed was not recorded. The fixed JSON, rather than `--seed`, controls KS20 splitting. An explicit `--split_file` must preserve all 20 labels and assign three distinct settings per identity.
+The converter removes ten frames from each end by default. For length T, training
+uses shifts `0..T-1` and stride `T // 2`; gallery and probe use shift zero and stride T.
+Short recordings may produce no window. KS20 preprocessing supports closed-set
+data only, without unknown inputs or FPS resampling.
 
-The default converter removes ten frames from each end of every recording. For length N, training uses shifts `0..N-1` and stride `N // 2`; gallery and probe use shift zero and non-overlapping stride N. This inherited training augmentation deliberately repeats some windows. For N=6, the verified collection produces **1,886 training, 212 gallery, and 218 probe windows** before loader resampling. Short recordings can contribute no complete window: this occurs for two train, seven gallery, and six probe sequences in the recovered split. Every identity nevertheless has valid windows in every split.
+## Explicit OOS splits
 
-The converter writes all 15 coordinate/label/index files under `Datas/KS20/<length or variant>/` and records source hashes, sequence assignments, trimming, window counts, and output hashes in `preprocessing_provenance.json`. Inputs remain unchanged. KS20 preprocessing supports the closed-set protocol; it does not create an unknown split or apply FPS resampling. The standalone command is also available:
-
-```bash
-python ks20_preprocessing.py --input_dir /path/to/KS20 --length 6
-python main.py --config config/paper/ks20_f6.json --task train
-```
-
-## Explicit trial manifests
-
-The published OOS trial manifests are `config/trials/wut/exp01.json` through `exp05.json` and `config/trials/kgbd/exp01.json` through `exp05.json`. Each records original identity membership, exact sequence filenames and split assignments, source byte counts and SHA-256 fingerprints, the matching checkpoint digest, and historical window-count evidence. Paths inside these manifests are relative to the raw identity root. Their internal trial names retain the original form `exp_01` through `exp_05`.
-
-Prepare a trial directly from the full original identity collection:
+Unknown identities must be absent from training and gallery data. The manifests
+in `config/trials/` define five selections per dataset, holding out two WUT or
+sixteen KGBD identities. Prepare each trial in its own directory:
 
 ```bash
 python protocols.py --manifest config/trials/wut/exp01.json \
-  --raw-root /path/to/full/WUT \
-  --prepared-root reproduction_runs/wut/exp01/data
-
+  --raw-root /path/to/raw/WUT --prepared-root /path/to/trials/wut01/data
 python protocols.py --manifest config/trials/kgbd/exp01.json \
-  --raw-root '/path/to/full/kinect gait raw dataset' \
-  --prepared-root reproduction_runs/kgbd/exp01/data
+  --raw-root /path/to/raw/KGBD --prepared-root /path/to/trials/kgbd01/data
 ```
 
-Known and held-out people remain in their original raw directories. The manifest selects 23 known and two unknown WUT identities, or 148 known and sixteen unknown KGBD identities. Outputs are written only below the separate prepared root. That root contains `<dataset>/6/` and `provenance.json`, which binds the manifest to source fingerprints, every prepared file, original labels, per-sequence window counts, and any missing known IDs. A fingerprint or recorded-count mismatch stops preparation. Existing prepared data are reused only after provenance verification.
+The manifest selects identities and sequences without moving raw files.
+Preparation checks source fingerprints and records generated files in
+`provenance.json`; keep it with the prepared data. Repeat with `exp02.json` through
+`exp05.json` using separate output roots, then follow the
+[training and evaluation commands](../README.md). Train a checkpoint for each
+known-identity split; a closed-set checkpoint trained on all people is unsuitable.
 
-These prepared splits can be used for **fresh training with your own checkpoints**. `main.py --task train`, `evaluate`, `oos`, and `oos-kgbd` do not require an archived checkpoint digest. The `checkpoint_sha256` restriction applies to the optional `reproduce.py evaluate` workflow that verifies a specific archived experiment. See [the self-training recipe](PAPER_REPRODUCTION.md#train-and-evaluate-your-own-oos-model) before using that archival verifier.
-
-Users with their own recorded experiment logs can recover a manifest explicitly:
-
-```bash
-python protocols.py --dataset WUT --trial exp_01 \
-  --group-root /path/to/recorded_experiment_group \
-  --raw-root /path/to/full/WUT --manifest custom_trials/wut_exp01.json
-```
-
-Recovery reads the group's `summary.json`, `logs/exp_01_preprocess.log`, and available training/evaluation evidence. Historical logs record sequence positions and counts; the newly recovered hashes pin the files present during recovery and do not establish their past contents. The released manifests already contain the recovered selections, so end users do not need the original logs. See [Paper reproduction](PAPER_REPRODUCTION.md) for checkpoint verification, evaluation, aggregation, and the manifest API.
+OOS metrics use leave-one-out distances within the known training library as ID
+calibration scores, rather than held-out probe scores. Identity retrieval uses
+the gallery; rejection uses distances in the full embedding space.
 
 ## Windowing and output format
 
-Known WUT/KGBD sequences and WUT unknown sequences are divided into complete, non-overlapping windows. Incomplete final windows and complete windows containing NaNs are dropped. KS20 uses the shifted training windows described above and requires finite parsed coordinates. The inherited KGBD unknown-text branch retains its original behavior: it groups records into frames and windows without applying the known-data NaN filter. Provide finite coordinates in KGBD unknown files. Unknown windows are deduplicated within the unknown split using coordinates rounded to four decimal places; there is no automatic deduplication across known and unknown splits.
+WUT/KGBD known sequences and WUT unknown sequences use complete, non-overlapping
+windows. Incomplete final windows and windows containing NaNs are dropped.
+KGBD unknown TXT inputs do not receive that NaN filter: supply finite coordinates.
+Unknown windows are deduplicated within their split after rounding coordinates
+to four decimal places; known and unknown data are not deduplicated against each other.
 
-Optional downsampling selects existing frames on the nearest uniform time grid before windowing; it does not interpolate poses. Native frame-rate defaults are WUT 15 FPS and KGBD 30 FPS. The WUT raw package has no separate 10-FPS or 5-FPS files; these variants are derived from the 5C fusion by downsampling during preprocessing. Use a separate `--data_subdir` for each frame-rate or split variant. Rerunning preprocessing does not delete stale files from earlier runs, so use a fresh output subdirectory when changing which splits are produced.
+Use `--src_fps` and `--dst_fps` for downsampling: frames are selected on a nearest
+uniform time grid before windowing, without interpolation. WUT is 15 FPS and
+KGBD is 30 FPS. WUT 10-FPS and 5-FPS variants come from the 15-FPS 5C fusion arrays.
+Keep each variant in its own `--data_subdir`.
 
 ```text
-Datas/
-  WUT/
-    6/
-      train_npy_data/
-        source_x_WUT_6.npy
-        source_y_WUT_6.npy
-        source_z_WUT_6.npy
-        ids_WUT_6.npy
-        frame_id_WUT_6.npy
-      test_npy_data/
-        gallery/
-          t_source_x_WUT_6.npy
-          t_source_y_WUT_6.npy
-          t_source_z_WUT_6.npy
-          ids_WUT_6.npy
-          frame_id_WUT_6.npy
-        probe/
-          ...
-      unknown_npy_data/
-        t_source_x_WUT_6.npy
-        t_source_y_WUT_6.npy
-        t_source_z_WUT_6.npy
-        ids_WUT_6.npy
-        frame_id_WUT_6.npy
+Datas/WUT/6/
+  train_npy_data/
+    source_x_WUT_6.npy
+    source_y_WUT_6.npy
+    source_z_WUT_6.npy
+    ids_WUT_6.npy
+    frame_id_WUT_6.npy
+  test_npy_data/
+    gallery/
+    probe/
+  unknown_npy_data/          # Only when unknown inputs are prepared
 ```
 
-Replace `WUT` with `KGBD` or `KS20` for their files; KS20 has no `unknown_npy_data` directory. A variant such as `6_10fps` changes the directory name, while filenames retain the actual window length `6`.
+Gallery, probe, and unknown folders each contain the same five files, with
+`t_source_` instead of `source_` for coordinates. Replace `WUT` with the dataset
+name. KS20 has no unknown folder. A variant directory such as `6_3c` still uses
+length `6` in filenames.
 
 | File | Contents |
 | --- | --- |
-| `source_{x,y,z}_*.npy` | Training coordinates, each shape `(N * T, J)` |
-| `t_source_{x,y,z}_*.npy` | Gallery, probe, or unknown coordinates in the same shape |
-| `frame_id_*.npy` | One integer identity label per **window**, shape `(N,)`, despite the historical filename |
-| `ids_*.npy` | NumPy object containing a dictionary from raw identity ID to window-index list |
+| `source_{x,y,z}_*.npy`, `t_source_{x,y,z}_*.npy` | Coordinates, each `(N * T, J)` for N windows, T frames, J joints |
+| `frame_id_*.npy` | One identity label per window, shape `(N,)` |
+| `ids_*.npy` | NumPy object dictionary mapping raw identity IDs to window-index lists |
 
-The object dictionary format is retained for compatibility. Load only prepared arrays from a trusted source.
+Load object arrays only from trusted sources.
 
-## External NPY queries
+## Loader and external queries
 
-`main.py --task oos --data_source npy --input sequence.npy` accepts an external
-sequence with shape `(frames, J, 3)`; the inherited shape adapter also accepts
-channel-first or flattened coordinate layouts. Coordinate units, joint order,
-and normalization must agree with training. This adapter does not infer a
-skeleton convention or apply the KGBD joint permutation.
+The loader reshapes coordinates into `(N, T, J, 3)` and centers each frame on
+original joint zero. KGBD then applies the joint permutation
+`[11,10,1,0,2,4,6,8,3,5,7,9,12,14,16,18,13,15,17,19]`.
+One-hot label columns follow sorted training identity keys. Unknown labels become
+all-zero rows; do not use `argmax` on these rows to infer an identity.
 
-For a KGBD external query, first subtract original joint zero and apply the
-permutation listed below, then use `--task oos-kgbd --center_root 0`. For a WUT
-query in the original joint order, the default root centering is appropriate.
+Use at least three known training identities, enough windows for a complete batch,
+and a batch size no smaller than the known identity count. Every identity must
+have windows in the complete training batches used to build prototypes.
 
-The external-query path removes frames containing NaNs before windowing. Exported
-frame predictions and window spans refer to this cleaned sequence, not the original
-frame numbers; maintain your own original-frame mapping if aligning to a video.
-This behavior is inherited and differs from dropping entire NaN-containing windows
-in the raw-data converters.
+External OOS NPY queries should have shape `(frames, J, 3)` and match the training
+coordinate units and **model joint order**. The external-query adapter does not
+apply the KGBD permutation. For KGBD, subtract original joint zero and apply the
+permutation above before inference with `--task oos-kgbd --center_root 0`.
+For WUT in its original joint order, the default root centering is appropriate.
+Prepared training/gallery arrays are still needed for feature libraries.
 
-## OOS identity labels
+External-query inference removes NaN-containing frames before windowing, so
+exported frame spans refer to the cleaned sequence. Keep an original-frame map
+when aligning predictions with a video.
 
-OOS retrieval labels are decoded through the prepared training identity keys,
-so holding out identities does not shift names or original dataset IDs.
-`--one_based_ids 1` (default) uses one-based numeric ground truth and exports;
-`0` uses zero-based values. WUT also accepts its original identity names as
-`--groundtruth`.
-
-CSV rows retain the best known retrieval candidate and report rejection in the
-`oos_window` column. The exported `_win_id.npy` applies that rejection directly:
-its default one-based unknown ID is 26 for WUT, 165 for KGBD, or 21 for KS20.
-`_topk_id.npy` retains the ranked known candidates. The result JSON records the
-indexing convention, original known IDs, and unknown sentinel.
-
-## Loader contract
-
-`data.gen_train_data(...)` retains the original function signature. The SSGT path uses `D=False`, `graph=False`, and `L3=True`, and returns **26 entries**:
-
-| Index | Value |
-| --- | --- |
-| 0, 1, 2 | Training joint, part, and body windows |
-| 3, 4 | Legacy placeholders, zero |
-| 5 | Training one-hot labels |
-| 6, 7, 8 | Requested split joint, part, and body windows |
-| 9, 10 | Legacy placeholders, zero |
-| 11 | Requested split one-hot labels |
-| 12 | Joint adjacency, shape `(1, J, J)` |
-| 13 | Legacy placeholder, zero |
-| 14 | Joint Laplacian encoding, shape `(J, enc_k)` |
-| 15, 16, 17 | Part adjacency, zero placeholder, part Laplacian encoding |
-| 18, 19, 20 | Body adjacency, zero placeholder, body Laplacian encoding |
-| 21–24 | Legacy placeholders, zero |
-| 25 | Configured number of classes: WUT 25, KGBD 164, KS20 20 |
-
-Joint windows have shape `(N, T, J, 3)`, part windows `(N, T, 10, 3)`, and body windows `(N, T, 5, 3)`. Coordinates are centered on original joint zero. KGBD then applies the inherited joint permutation `[11,10,1,0,2,4,6,8,3,5,7,9,12,14,16,18,13,15,17,19]`; the centered root consequently appears at model joint index three.
-
-One-hot columns follow the sorted **training identity keys**. Labels outside that known set become all-zero rows, including unknown labels 26/165. These rows indicate unknown samples and must not be interpreted using `argmax` as a known identity. The final tuple field retains the fixed dataset capacity even if a protocol uses fewer known identities. New training uses the number of one-hot columns for its actual prototype count: 23/148 for the WUT/KGBD OOS splits, rather than the legacy capacities 25/164. Every known identity must appear in the complete training batches used to build prototypes; missing coverage raises an error. This corrects the archived unused-zero-prototype behavior without changing full closed-set class counts or saved-checkpoint inference.
-
-The legacy class-balanced training sampler is retained for non-KGBD datasets. The loader raises `ValueError` when the number of training windows is less than `batch_size`, when `batch_size` is less than the number of known classes, or when an identity has no windows. Use sufficient windows and an appropriate batch size. All datasets require at least **three known training identities**: smaller protocols raise `ValueError` because the inherited scikit-learn binary label encoding would not match the multiclass downstream code. Custom binary datasets need an explicit label-encoding adaptation. Alternative legacy `D=True` or `graph=True` branches raise `NotImplementedError`; the public SSGT path uses both options as `False`.
+Retrieval IDs retain original dataset identities. `--one_based_ids 1` is the
+default; `0` selects zero-based exports. WUT also accepts identity names for
+`--groundtruth`. CSV `oos_window` marks rejected windows while retaining their
+best known candidate; `_win_id.npy` instead uses unknown ID 26 for WUT or 165
+for KGBD under the default indexing. `_topk_id.npy` keeps known candidates.

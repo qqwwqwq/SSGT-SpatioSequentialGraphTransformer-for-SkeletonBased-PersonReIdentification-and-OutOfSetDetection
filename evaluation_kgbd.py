@@ -66,6 +66,7 @@ from evaluation import (
     _topk_by_identity,
     _sample_idx,
     _majority_vote_per_frame,
+    _score_histogram_path,
     load_checkpoint_model,
     resolve_spatial_pos_encoding,
 )
@@ -689,9 +690,7 @@ def main(argv=None):
         plt.title(f'ID vs OOS on score (k={int(args.unk_knn_k)}, σ={float(args.sigma_eval):.2f})')
         plt.legend(loc='best'); plt.grid(alpha=0.2); plt.tight_layout()
 
-        score_plot = (args.save_plot.replace('_oos_scatter', '_oos_score_hist')
-                      if args.save_plot else
-                      ( (args.save_npy_base.rstrip('/') if args.save_npy_base else 'oos') + '_oos_score_hist.png'))
+        score_plot = _score_histogram_path(args.save_plot, args.save_npy_base)
         os.makedirs(os.path.dirname(score_plot) or ".", exist_ok=True)
         plt.savefig(score_plot, dpi=170); plt.close()
         print(f"[Plot] Saved score histogram -> {score_plot}")

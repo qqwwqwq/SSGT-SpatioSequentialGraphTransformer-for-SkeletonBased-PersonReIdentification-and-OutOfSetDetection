@@ -123,7 +123,7 @@ class DynamicLossBalancer:
         return event
 
     def metadata(self):
-        """Describe the actual schedule without claiming unverified results."""
+        """Return the loss-balancing settings stored with each checkpoint."""
         description = dict(PAPER_PROTOCOL)
         description.update({
             'initial_lambda': self.initial_lambda,

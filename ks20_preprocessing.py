@@ -1,8 +1,7 @@
-"""KS20 MATLAB preprocessing with the recovered paper split.
+"""Convert KS20 MATLAB recordings into train, gallery, and probe arrays.
 
-Raw files remain unchanged. The parser, sparse identity mapping, sequence
-ordering, trimming, and shifted training windows retain the research behavior.
-The explicit split records recovered assignments instead of guessing a seed.
+Each identity uses a distinct gait recording for each split across five views.
+The converter trims sequence ends and creates shifted windows for training.
 """
 
 import argparse
@@ -204,7 +203,7 @@ def load_split(split_file=None):
 
     Args:
         split_file (str or Path or None): Explicit JSON settings. None selects
-            the recovered split supplied with the release.
+            config/ks20_split.json.
 
     Returns:
         dict: Original contiguous labels 0..19 mapped to body IDs and the
@@ -346,12 +345,12 @@ def process_dataset_KS20(input_dir, fr=6, data_subdir="", split_file=None, clip_
 # === Command-Line Interface ===
 
 def main(argv=None):
-    """Convert KS20 from explicit raw input using the recovered split."""
+    """Convert KS20 recordings using the configured sequence split."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input_dir", required=True, help="Raw root containing all five viewpoint folders.")
     parser.add_argument("--length", "--fr", dest="length", type=int, default=6)
     parser.add_argument("--data_subdir", default="", help="Variant below KS20; defaults to the window length.")
-    parser.add_argument("--split_file", default=None, help="Explicit KS20 JSON split; defaults to the recovered settings.")
+    parser.add_argument("--split_file", default=None, help="KS20 JSON split; defaults to config/ks20_split.json.")
     parser.add_argument("--clip_num", type=int, default=10, help="Frames removed from each sequence end.")
     args = parser.parse_args(argv)
     if args.length < 2 or args.clip_num < 0:

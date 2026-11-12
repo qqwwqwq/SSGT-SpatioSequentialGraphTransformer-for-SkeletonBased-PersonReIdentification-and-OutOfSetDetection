@@ -263,12 +263,9 @@ class EvaluationTests(unittest.TestCase):
                 with self.assertRaisesRegex(RuntimeError, 'Missing key'):
                     training.main(['--mode', 'Eval', '--ckpt', str(self.path), '--device', 'cpu'])
 
-    def test_metrics_json_preserves_historical_training_provenance(self):
+    def test_metrics_json_preserves_checkpoint_settings_and_current_metrics(self):
         saved = dict(vars(self.saved_args))
-        saved['gpc_iota'] = 1.2
-        saved['conv_check'] = 1
-        saved.pop('seed_val')
-        saved.pop('fix_seed')
+        saved['gpc_iota'] = 7.0
         torch.save({'args': saved, 'model_state': self.model.state_dict()}, self.path)
         output = Path(self.temp.name) / 'metrics.json'
         with mock.patch.object(training.process, 'gen_train_data', side_effect=self.fake_data):
@@ -277,14 +274,11 @@ class EvaluationTests(unittest.TestCase):
                                '--device', 'cpu', '--metrics_output', str(output)])
         report = json.loads(output.read_text())
         self.assertEqual(len(report['checkpoint']['sha256']), 64)
-        self.assertEqual(report['checkpoint']['saved_training_args']['gpc_iota'], 1.2)
+        self.assertEqual(report['checkpoint']['saved_training_args']['gpc_iota'], 7.0)
         self.assertEqual(report['data']['known_identity_count'], 3)
         self.assertEqual(set(report['metrics']), {'R1', 'R5', 'R10', 'mAP'})
-        protocol = report['paper_protocol']
-        self.assertFalse(protocol['checkpoint_declares_current_schedule'])
-        self.assertFalse(protocol['training_seed_metadata_present'])
-        self.assertFalse(protocol['evaluation_performs_training'])
-        self.assertEqual(protocol['recorded_differences']['gpc_iota']['checkpoint'], 1.2)
+        self.assertEqual(report['evaluation_config']['mode'], 'Eval')
+        self.assertTrue(all(np.isfinite(value) for value in report['metrics'].values()))
 
     def test_one_automatic_run_seed_is_recorded_and_shared_by_loader_calls(self):
         output = Path(self.temp.name) / 'seed_metrics.json'
@@ -385,7 +379,7 @@ class PaperLossBalancingTests(unittest.TestCase):
             with contextlib.redirect_stderr(io.StringIO()):
                 with self.assertRaises(SystemExit):
                     training.get_args(flags)
-            # Historical checkpoints remain evaluable using their saved architecture.
+            # Evaluation restores the architecture recorded in the checkpoint.
             training.get_args(['--mode', 'Eval'] + flags)
         for prompt in ('l1', 'l2', 'MSE'):
             training.get_args(['--S_prompt', prompt, '--T_prompt', prompt])

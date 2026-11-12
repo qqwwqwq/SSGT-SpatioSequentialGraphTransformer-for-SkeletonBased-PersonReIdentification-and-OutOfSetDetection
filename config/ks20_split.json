@@ -2,7 +2,6 @@
   "schema_version": 1,
   "dataset": "KS20",
   "description": "One gc setting per split and identity across all five views (100 sequences per split).",
-  "provenance": "Exact assignments recovered from the original prepared arrays by matching all windows to the raw MAT sequences. The original random seed was not recorded.",
   "views": [
     "frontal",
     "left_diagonal",

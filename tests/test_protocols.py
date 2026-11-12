@@ -1,6 +1,8 @@
-"""Synthetic tests for immutable, explicitly partitioned reproduction datasets."""
+"""Test raw-data integrity and isolated preparation of SSGT OOS splits."""
 
+import contextlib
 import copy
+import io
 import json
 from pathlib import Path
 import sys
@@ -58,15 +60,14 @@ class ProtocolTests(unittest.TestCase):
                                "sequences": sequences})
         return {"schema_version": 1, "dataset": dataset, "trial_id": "synthetic",
                 "length": 6, "data_subdir": "6_explicit", "identities": identities,
-                "expected_identities": {"known": 3, "unknown": 1},
-                "expected_windows": {"train": 3, "gallery": 3, "probe": 3, "unknown": 1}}
+                "expected_identities": {"known": 3, "unknown": 1}}
 
     def test_wut_source_holdout_and_provenance(self):
         manifest = self.build_manifest("WUT")
         source_before = {str(path.relative_to(self.raw)): protocols.sha256_file(path)
                          for path in self.raw.rglob("*") if path.is_file()}
         provenance = protocols.prepare_trial(manifest, self.raw, self.output)
-        self.assertEqual(provenance["windows"], manifest["expected_windows"])
+        self.assertEqual(provenance["windows"], {"train": 3, "gallery": 3, "probe": 3, "unknown": 1})
         self.assertEqual(provenance["known_ids"], [1, 2, 3])
         self.assertEqual(provenance["unknown_original_ids"], [4])
         self.assertEqual(len(provenance["output_sha256"]), 20)
@@ -132,38 +133,52 @@ class ProtocolTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Prepared output fingerprint mismatch"):
             protocols.verify_provenance(manifest, self.output)
 
-    def test_recorded_count_mismatch_fails_before_output_is_written(self):
+    def test_missing_training_identity_fails_before_output_is_written(self):
         manifest = self.build_manifest("WUT")
-        manifest["expected_windows"]["probe"] = 4
-        with self.assertRaisesRegex(ValueError, "Historical window count mismatch"):
+        sequence = manifest["identities"][0]["sequences"][0]
+        source = self.raw / sequence["source"]
+        array = np.load(source)
+        array[0, 0, 0] = np.nan
+        np.save(source, array)
+        sequence["sha256"] = protocols.sha256_file(source)
+        with self.assertRaisesRegex(ValueError, "cover every known identity"):
             protocols.prepare_trial(manifest, self.raw, self.output)
         self.assertFalse(self.output.exists())
 
-    def test_historical_log_parser_preserves_person15_exception(self):
-        log = (
-            "Person ID: 1 | Gallery Seqs: 0, 2| Probe Seq: 1 | Total Seq: 5\n"
-            "Person ID: 15 | Gallery Seqs: 0 | Probe Seq: 1 | Total Seq: 3\n"
-        )
-        result = protocols.parse_preprocess_log(log, "KGBD")
-        self.assertEqual(result[1]["gallery_indices"], [0, 2])
-        self.assertEqual(result[15]["gallery_indices"], [0])
-        self.assertEqual(result[15]["name"], "Person015")
-        log = "Julia\n[8 0] [1]\nPerson ID: 3 | Gallery Seqs: 8, 0 | Probe Seq: 1 | Total Seq: 27\n"
-        result = protocols.parse_preprocess_log(log, "WUT")
-        self.assertEqual(result[3]["total_sequences"], 27)
-        self.assertEqual(result[3]["gallery_indices"], [8, 0])
+    def test_sources_and_outputs_must_stay_in_separate_roots(self):
+        manifest = self.build_manifest("WUT")
+        with self.assertRaisesRegex(ValueError, "separate, non-nested"):
+            protocols.prepare_trial(manifest, self.raw, self.raw / "prepared")
+        escaped = copy.deepcopy(manifest)
+        escaped["identities"][0]["sequences"][0]["source"] = "../outside.npy"
+        with self.assertRaisesRegex(ValueError, "relative and stay within"):
+            protocols.prepare_trial(escaped, self.raw, self.output)
+        self.assertFalse(self.output.exists())
 
-    def test_historical_loader_count_parser_uses_raw_training_windows(self):
-        text = (
-            "(70278, 19) 11111111\n"
-            "[gen_train_data] dataset=WUT | split=probe | T=6\n"
-            "[gen_train_data] X_train_J : (22770, 6, 19, 3)\n"
-            "[gen_train_data] X_test_J : (777, 6, 19, 3)\n"
-            "[gen_train_data] dataset=WUT | split=unknown | T=6\n"
-            "[gen_train_data] X_test_J : (376, 6, 19, 3)\n"
-        )
-        self.assertEqual(protocols._recorded_window_counts(text, "WUT", 6),
-                         {"train": 11713, "probe": 777, "unknown": 376})
+    def test_cli_prepares_a_manifest_for_training(self):
+        manifest = self.build_manifest("KGBD")
+        filename = self.root / "split.json"
+        filename.write_text(json.dumps(manifest))
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            protocols.main(["--manifest", str(filename), "--raw-root", str(self.raw),
+                            "--prepared-root", str(self.output)])
+        summary = json.loads(output.getvalue())
+        self.assertEqual(Path(summary["data_root"]), self.output)
+        self.assertEqual(summary["windows"], {"train": 3, "gallery": 3, "probe": 3, "unknown": 1})
+        protocols.verify_provenance(filename, self.output)
+
+    def test_packaged_manifests_define_five_complete_oos_splits_per_dataset(self):
+        config = Path(__file__).resolve().parents[1] / "config" / "trials"
+        for dataset, known, unknown, sequence_count in (("wut", 23, 2, 293), ("kgbd", 148, 16, 822)):
+            files = sorted((config / dataset).glob("exp*.json"))
+            self.assertEqual(len(files), 5)
+            for filename in files:
+                with self.subTest(manifest=filename.name, dataset=dataset):
+                    manifest = protocols.load_manifest(filename)
+                    self.assertEqual(protocols.validate_manifest(manifest), {"known": known, "unknown": unknown})
+                    self.assertEqual(sum(len(person["sequences"]) for person in manifest["identities"]), sequence_count)
+                    self.assertEqual(manifest["length"], 6)
 
     def test_missing_probe_windows_are_reported_without_changing_protocol(self):
         manifest = self.build_manifest("WUT")
@@ -173,7 +188,6 @@ class ProtocolTests(unittest.TestCase):
         array[0, 0, 0] = np.nan
         np.save(source, array)
         seq["sha256"] = protocols.sha256_file(source)
-        manifest["expected_windows"]["probe"] = 2
         provenance = protocols.prepare_trial(manifest, self.raw, self.output)
         self.assertEqual(provenance["missing_known_ids"]["probe"], [1])
         self.assertEqual(provenance["windows"]["probe"], 2)

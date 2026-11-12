@@ -1,55 +1,29 @@
-# Code and documentation conventions
+# Code style
 
-The reference is [DualSOM](https://github.com/qqwwqwq/DualSOM--SOFTWAREX-).
-Its current README, repository tree, `main.py`, `Dualmap_api.py`, and
-`preprocessing.py` were inspected directly on 2026-11-13. SSGT follows their
-organization and documentation patterns while documenting its own model and
-supported workflows.
+The project follows the module and documentation style of
+[DualSOM](https://github.com/qqwwqwq/DualSOM--SOFTWAREX-): a root `main.py`, separate
+model and preprocessing modules, JSON configuration, and `Datas/` and `weight/`
+directories.
 
-## Reference correspondence
-
-| Inspected DualSOM pattern | SSGT adaptation |
-| --- | --- |
-| Paper and authors, badges, linked contents, quick start | README paper header, environment/license badges, contents, and WUT quick start |
-| Data, configuration, execution, results, reproducibility, and API sections | README task commands and links to detailed data, reproduction, validation, and API guides |
-| Root `main.py`, `params.json`, separate model and preprocessing modules | Root task entry point, JSON presets, `SSGT.py`, `training.py`, and converters |
-| `Datas/`, `config/`, and `weight/` directories | Same folder names; SSGT additionally gives generated outputs a `results/` directory |
-| English module descriptions and usage examples | English purpose/usage docstrings at SSGT entry points |
-| Three-line `# ===` section banners | Banners for major model, data, training, and evaluation stages |
-| Public routine docs with `Args`, `Returns`, and `Raises` | Shape-aware argument, result, and failure documentation |
-
-The inspected examples are [README.md](https://github.com/qqwwqwq/DualSOM--SOFTWAREX-/blob/main/README.md),
-[main.py](https://github.com/qqwwqwq/DualSOM--SOFTWAREX-/blob/main/main.py),
-[Dualmap_api.py](https://github.com/qqwwqwq/DualSOM--SOFTWAREX-/blob/main/Dualmap_api.py),
-and [preprocessing.py](https://github.com/qqwwqwq/DualSOM--SOFTWAREX-/blob/main/preprocessing.py).
-The organization is adapted, not an identical tree: SSGT needs separate training,
-OOS evaluation, dataset protocols, and regression tests. No DualSOM-specific
-model, GUI, dataset, or cached-model claim is implied by this style alignment.
-
-## Source conventions
-
-- Start modules with an English docstring describing their role and usage.
-- Use section banners for major stages, not individual statements.
-- Document public routines using `Args`, `Returns`, and `Raises` where applicable.
-- Explain tensor shapes and protocol assumptions near numerical operations.
-- Explain why a mask, normalization, or split exists rather than narrating Python.
-- Keep user configuration in JSON or argparse; never embed a developer's paths.
-- Generate and record run seeds by default; expose explicit replay seeds.
-- Distinguish fixed protocol definitions from stochastic run settings.
-- Label historical measurements with their original seed policy and version.
-- Keep old parameter names when changing them would break stored checkpoints.
-- Do not retain commented copies of old implementations or numbered debug prints.
+- Write module docstrings, comments, and command-line help in English.
+- Start each module with a short purpose statement and a usage example when useful.
+- Separate major processing stages with `# ===` section banners.
+- Document public functions with `Args`, `Returns`, and `Raises` as needed.
+- State array shapes, coordinate conventions, and split assumptions explicitly.
+- Explain non-obvious decisions without repeating what the code already says.
+- Keep paths and model settings in CLI arguments or JSON configuration.
+- Remove commented-out implementations and temporary debugging output.
 
 ```python
 # =====================================================================
-# Feature Library Construction
+# Feature Normalization
 # =====================================================================
 
 def normalize_features(features, epsilon=1e-12):
-    """Normalize sequence representations before distance-based matching.
+    """Normalize sequence features before distance-based matching.
 
     Args:
-        features (np.ndarray): Sequence features with shape (samples, channels).
+        features (np.ndarray): Features with shape (samples, channels).
         epsilon (float): Lower bound preventing division by zero.
 
     Returns:
@@ -59,10 +33,5 @@ def normalize_features(features, epsilon=1e-12):
     return features / np.maximum(norms, epsilon)
 ```
 
-## README conventions
-
-Keep the main task commands visible after the introduction and quick start.
-Use tables for parameter and result comparisons, and link detailed protocol/API
-explanations from the README. Separate paper targets from measured results and
-state which source version and seed policy produced each measurement. A note
-about stochastic results must not promise a fixed bound on their variation.
+Keep runnable commands in the [README](../README.md), dataset details in the
+[data guide](DATA.md), and model settings in [hyperparameters](HYPERPARAMETERS.md).

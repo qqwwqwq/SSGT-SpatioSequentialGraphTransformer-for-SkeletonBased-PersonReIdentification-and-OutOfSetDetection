@@ -1,8 +1,9 @@
 """SSGT training, prototype construction, and closed-set evaluation.
 
-This module retains the reconstruction/contrastive objectives and implements
-the published Algorithm 2 loss-weight schedule. The public entry point accepts an argument list so main.py can combine
-JSON configuration with command-line overrides. Evaluation restores checkpoint
+This module implements the reconstruction and contrastive objectives with
+the Algorithm 2 loss-weight schedule. The entry point accepts an argument list
+so main.py can combine JSON configuration with command-line overrides.
+Evaluation restores checkpoint
 metadata and loads all model parameters strictly before extracting features.
 
 Usage:
@@ -28,7 +29,7 @@ import torch.nn.functional as F
 import data as process
 import paths
 from SSGT import SSGT, TranSG
-from loss_balancing import DynamicLossBalancer, PAPER_PROTOCOL
+from loss_balancing import DynamicLossBalancer
 from retrieval import retrieval_metrics
 from randomness import seed_everything
 
@@ -129,7 +130,7 @@ def get_args(argv=None):
                     'enable_dynamic_gpc': 1, 'train_eval_gallery': 'split'}
         for name, expected in required.items():
             if getattr(args, name) != expected:
-                p.error(f'Final SSGT training requires --{name}={expected}; historical variants can be evaluated with --mode Eval.')
+                p.error(f'Final SSGT training requires --{name}={expected}.')
         if args.S_prompt == '0' or args.T_prompt == '0':
             p.error('Final SSGT training requires both spatial and trajectory reconstruction losses.')
         for name in ('t_1', 't_2'):
@@ -487,7 +488,7 @@ def _restore_evaluation_args(args):
     ckpt_path = Path(args.ckpt).expanduser() if args.ckpt else checkpoint_directory(args) / 'best.ckpt'
     if not ckpt_path.is_file():
         raise FileNotFoundError(f'Checkpoint not found: {ckpt_path}. Supply --ckpt or train a model first.')
-    # Historical PyTorch 1.13 checkpoints include pickled argument metadata.
+    # Checkpoints contain argument metadata as well as model tensors.
     # Load only local checkpoint files whose source you trust.
     checkpoint = torch.load(ckpt_path, map_location='cpu', weights_only=False)
     if not isinstance(checkpoint, dict) or not isinstance(checkpoint.get('args'), dict) or 'model_state' not in checkpoint:
@@ -538,29 +539,10 @@ def resolve_spatial_pos_encoding(checkpoint, computed_encoding, joint_count, enc
 
 
 def evaluation_report(args, checkpoint, device, metrics, split_labels, spatial_pos_encoding):
-    """Collect measured retrieval metrics and their checkpoint/data provenance.
-
-    Historical checkpoint arguments are reported literally. Missing training
-    metadata is identified as missing, rather than being filled from current
-    defaults and presented as evidence of the historical training protocol.
-    """
+    """Collect retrieval metrics, run settings, and input-file metadata."""
     mean_ap_value, rank1, rank5, rank10 = metrics
     train_labels, gallery_labels, probe_labels = split_labels
     saved_args = checkpoint['args']
-    paper_fields = {
-        'GPC_lambda': 0.5, 'gpc_up_period': 10, 'gpc_iota': 10.0,
-        'gpc_tau': 0.05, 'enable_dynamic_gpc': 1,
-        'use_time_attn': 1, 'spa_pos_type': 'laplacian',
-        'frame_attn_pool': 0, 'learnable_temp': 0,
-    }
-    differences = {
-        key: {'checkpoint': saved_args[key], 'paper_release': expected}
-        for key, expected in paper_fields.items()
-        if key in saved_args and saved_args[key] != expected
-    }
-    for key, expected in (('conv_check', 0), ('gpc_lambda_min', 0.0), ('gpc_lambda_max', 1.0)):
-        if key in saved_args and saved_args[key] != expected:
-            differences[key] = {'checkpoint': saved_args[key], 'paper_release': expected}
     subdirectory = args.data_subdir or str(args.length)
     dataset_dir = paths.data_root() / args.dataset / subdirectory
     split_names = {'train': 'train_npy_data',
@@ -586,7 +568,6 @@ def evaluation_report(args, checkpoint, device, metrics, split_labels, spatial_p
             raw_labels = np.load(labels_path, allow_pickle=True)
             identity_sets[split] = np.unique(raw_labels).tolist()
     config = dict(vars(args))
-    checkpoint_protocol = checkpoint.get('paper_protocol')
     return {
         'schema_version': 1,
         'evaluation': 'closed_set_reidentification',
@@ -603,18 +584,6 @@ def evaluation_report(args, checkpoint, device, metrics, split_labels, spatial_p
             'known_identity_count': checkpoint.get('known_identity_count'),
         },
         'evaluation_config': config,
-        'paper_protocol': {
-            'release_loss_schedule': dict(PAPER_PROTOCOL),
-            'checkpoint_loss_schedule': checkpoint_protocol,
-            'checkpoint_declares_current_schedule': (
-                isinstance(checkpoint_protocol, dict)
-                and checkpoint_protocol.get('version') == PAPER_PROTOCOL['version']
-            ),
-            'recorded_differences': differences,
-            'unrecorded_training_fields': [key for key in paper_fields if key not in saved_args],
-            'training_seed_metadata_present': all(key in saved_args for key in ('seed_val', 'fix_seed')),
-            'evaluation_performs_training': False,
-        },
         'data': {
             'root': str(paths.data_root()),
             'dataset': args.dataset,
@@ -806,7 +775,6 @@ def main(argv=None):
         'requested_seed': int(args.requested_seed_val),
         'selection': args.seed_selection,
         'deterministic_cudnn': bool(args.fix_seed),
-        'cross_device_bitwise_reproducibility_verified': False,
     }
     run_protocol['prototype_protocol'] = {
         'identity_count': nb_classes_total,

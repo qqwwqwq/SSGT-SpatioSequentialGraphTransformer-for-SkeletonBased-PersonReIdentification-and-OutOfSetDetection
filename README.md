@@ -10,7 +10,7 @@
 ## Paper
 
 *IEEE Robotics and Automation Letters*, 11(11), 12727–12734, 2026.
-[Paper](https://doi.org/10.1109/LRA.2026.3734851) · [Reproduction guide](docs/PAPER_REPRODUCTION.md) · [Data guide](docs/DATA.md)
+[Paper](https://doi.org/10.1109/LRA.2026.3734851) · [Parameter reference](docs/HYPERPARAMETERS.md) · [Data guide](docs/DATA.md)
 
 ## Introduction video
 
@@ -23,133 +23,182 @@ Enable sound in the player for the narration. You can also
 
 ## Table of contents
 
-- [Introduction video](#introduction-video)
 - [Introduction](#introduction)
-- [Dataset downloads](#dataset-downloads)
 - [Quick start](#quick-start)
-- [Repository layout](#repository-layout)
-- [Final model settings](#final-model-settings)
-- [Note on reproducibility](#note-on-reproducibility)
+- [System requirements](#system-requirements)
+- [Data preparation](#data-preparation)
+- [Configuration (`params.json`)](#configuration)
 - [Prepare and train](#prepare-and-train)
 - [Closed-set identification](#closed-set-identification)
-- [Out-of-set inference](#out-of-set-inference)
-- [Train an OOS model from scratch](#train-an-oos-model-from-scratch)
-- [Configuration, testing, and packaging](#configuration-testing-and-packaging)
-- [Documentation](#documentation)
+- [Out-of-set detection](#out-of-set-detection)
+- [Note on reproducibility](#note-on-reproducibility)
+- [Repository layout](#repository-layout)
+- [API reference](#api-reference)
+- [Testing and packaging](#testing-and-packaging)
 - [Citation and license](#citation-and-license)
 
 ## Introduction
 
-SSGT combines spatial and temporal graph attention, prototype contrastive learning,
-masked reconstruction, and dynamic loss balancing for skeleton-based person
-re-identification and out-of-set (OOS) detection. This repository implements the
-final **SSGT + DLoss** method and provides data preparation, training, and evaluation
-for WUT, KGBD, and KS20.
+SSGT learns skeleton representations through spatial and temporal graph attention,
+prototype contrastive learning, and masked reconstruction. Dynamic loss balancing
+combines the training objectives, and k-nearest-neighbor distances detect unknown
+identities. This repository implements the final **SSGT + DLoss** method for WUT,
+KGBD, and KS20.
 
-## Dataset downloads
+The workflow is: **prepare skeleton data → train SSGT → identify known people or
+reject unknown people**. Train your own model; pretrained weights are not provided.
 
-Download the raw skeleton data and preprocess them locally before training.
+## Quick start
 
-| Package | Download |
+Download and extract WUT using the [data preparation guide](#data-preparation).
+Replace `/path/to/WUT` below with its extracted directory.
+
+```bash
+git clone https://github.com/qqwwqwq/SSGT-SpatioSequentialGraphTransformer-for-SkeletonBased-PersonReIdentification-and-OutOfSetDetection.git SSGT
+cd SSGT
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install -r config/requirements.txt
+python main.py --task preprocess --dataset WUT --length 6 --input_dir /path/to/WUT
+python main.py --config params.json --task train
+```
+
+Run commands from the repository root. For CPU training, add `--device cpu` to the
+training command. Use a PyTorch build compatible with your CUDA installation for
+GPU training.
+
+## System requirements
+
+- Python 3.10 or 3.11.
+- PyTorch, NumPy, SciPy, scikit-learn, Matplotlib, and threadpoolctl; dependency
+  ranges are listed in [config/requirements.txt](config/requirements.txt).
+- A CPU or a CUDA-capable GPU. GPU acceleration is optional.
+
+For a Conda environment:
+
+```bash
+conda env create -f config/environment.yml
+conda activate ssgt
+```
+
+Check the installation with `python main.py --help`.
+
+## Data preparation
+
+Only raw WUT and KGBD data are distributed. Convert them locally before training.
+
+| Dataset package | Download |
 | --- | --- |
 | `SSGT-WUT-raw.zip` | [Google Drive](https://drive.google.com/file/d/1PBWrIvwNyMTTh-ZoyUujaY6j6vtHPlhH/view?usp=sharing) |
 | `SSGT-KGBD-raw.zip` | [Google Drive](https://drive.google.com/file/d/1MUjeOndmCqsn2VPEVC_mmB1jQ1hszsDo/view?usp=sharing) |
 
-[Download and extraction guide](docs/DOWNLOADS.md) ·
-[Checksums](config/dataset_SHA256SUMS) ·
+[Extraction instructions](docs/DOWNLOADS.md) · [Checksums](config/dataset_SHA256SUMS) ·
 [Package inventory](config/dataset_downloads.json)
 
 KS20 is not redistributed because its dataset notice requires permission.
 Obtain it independently before using the provided converter.
 
-## Quick start
+| Dataset | Raw input | Prepared input |
+| --- | --- | --- |
+| WUT | Per-person recording folders with fused skeleton NPY arrays | 19 joints |
+| KGBD | `PersonXXX` folders with text skeleton sequences and optional NPY caches | 20 joints |
+| KS20 | MATLAB recordings under five viewpoint directories | 25 joints |
 
-Use Python 3.10 or 3.11 and run these commands from the repository root.
-Replace `/path/to/WUT` with the extracted WUT dataset directory.
+Prepared coordinates and identity labels are written to
+`Datas/<dataset>/<length or variant>/`. See [docs/DATA.md](docs/DATA.md) for file
+names, split rules, joint order, and external NPY input formats.
+
+## Configuration
+
+`params.json` provides the default WUT configuration. Use `config/kgbd.json` for
+KGBD or a preset in `config/paper/` for another camera setup, sequence length, or
+frame rate. Configuration sections match the tasks accepted by `main.py`:
+
+| Section | Purpose |
+| --- | --- |
+| `task` | Default task: `train`, `evaluate`, `oos`, `oos-kgbd`, or `preprocess` |
+| `paths` | Prepared-data, model, and output directories |
+| `train` | Model and optimization settings |
+| `evaluate` | Closed-set evaluation options |
+| `oos` / `oos-kgbd` | Unknown-identity detection options |
+| `preprocess` | Raw-data conversion options |
+
+A minimal configuration is shown below. Omitted options use their parser defaults.
+
+```json
+{
+  "task": "train",
+  "paths": {
+    "data_dir": "Datas",
+    "model_dir": "weight",
+    "output_dir": "results"
+  },
+  "train": {
+    "dataset": "WUT",
+    "length": 6,
+    "H": 128,
+    "n_heads": 8,
+    "L_transformer": 2,
+    "batch_size": 256,
+    "lr": 0.00035,
+    "seed_val": -1,
+    "fix_seed": 0
+  }
+}
+```
+
+### Main hyperparameters
+
+Values below are the default training settings unless noted. JSON option names
+also work as command-line flags, for example `--batch_size 128`.
+
+| Parameter | Type | Default | Description |
+| --- | --- | --- | --- |
+| `dataset` | String | `WUT` | `WUT`, `KGBD`, or `KS20` |
+| `length` | Integer | `6` | Frames per window; match the prepared data |
+| `H` | Integer | `128` | Embedding width; must be divisible by `n_heads` |
+| `n_heads` | Integer | `8` | Attention heads in each spatial and temporal layer |
+| `L_transformer` | Integer | `2` | Layers in each attention branch |
+| `enc_k_spa` / `enc_k_time` | Integer | `10` / `4` | Spatial / temporal Laplacian dimensions |
+| `attn_dropout` | Float | `0.4` | Attention dropout probability |
+| `St_mask_num` / `Tr_mask_num` | Integer | `10` / `2` | Masked joints / frames for reconstruction |
+| `seq_lambda` | Float | `0.5` | Sequence contrastive weight; skeleton weight is its complement |
+| `prompt_lambda` | Float | `0.5` | Spatial reconstruction weight; trajectory weight is its complement |
+| `GPC_lambda` | Float | `0.5` | Initial contrastive weight; reconstruction weight is its complement |
+| `t_1` / `t_2` | Float | `0.07` / `14.0` | Sequence / skeleton contrastive temperatures |
+| `gpc_up_period` | Integer | `10` | Initial dynamic-weight update epoch; doubles after each update |
+| `gpc_iota` | Float | `10.0` | Signed loss-slope ratio threshold |
+| `gpc_tau` | Float | `0.05` | Dynamic-weight update step |
+| `lr` | Float | `0.00035` | Adam learning rate; KGBD uses this fixed value |
+| `batch_size` | Integer | `256` | Windows per training batch |
+| `patience` | Integer | `500` | Epochs without improvement in the selected checkpoint metrics |
+| `max_epochs` | Integer | `0` | Additional inclusive epoch cap; `0` uses the stopping schedule |
+| `seed_val` | Integer | `-1` | Generate a random seed; a nonnegative value selects an explicit seed |
+| `fix_seed` | Integer | `0` | `1` requests deterministic cuDNN settings |
+| `unk_knn_k` | Integer | `1` | Neighbor rank used by OOS detection |
+| `unk_sigma` | Float | `0.95` | Known-library quantile for the OOS acceptance threshold |
+
+The final training method requires temporal attention, Laplacian positional
+encoding, both reconstruction losses, and dynamic loss balancing. The supplied
+presets select these settings. The [full parameter reference](docs/HYPERPARAMETERS.md)
+covers every command-line option, valid ranges, loss formulas, dataset-specific
+behavior, preprocessing controls, and evaluation outputs.
+
+CLI arguments override JSON values. Paths inside JSON resolve relative to that
+file; CLI paths resolve from the working directory. Use `--data-dir`,
+`--model-dir`, and `--output-dir` to override the default directories.
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate
-python -m pip install -r requirements.txt
-python main.py --task preprocess --dataset WUT --length 6 --input_dir /path/to/WUT
-python main.py --config params.json --task train
+python main.py --config params.json --task train --batch_size 128 --max_epochs 200
+python main.py --config params.json --dry-run
 ```
-
-Use a PyTorch build compatible with your CPU or CUDA environment.
-An alternative Conda specification is provided in
-[config/environment.yml](config/environment.yml).
-
-## Repository layout
-
-```text
-SSGT/
-├── main.py                # Training, closed-set evaluation, preprocessing, OOS inference
-├── SSGT.py                # Spatial and temporal graph encoder
-├── training.py            # Training, reconstruction/contrastive objectives, ReID metrics
-├── loss_balancing.py      # Dynamic loss balancing
-├── retrieval.py           # ReID metrics
-├── evaluation.py          # OOS inference; WUT defaults
-├── evaluation_kgbd.py     # KGBD OOS inference
-├── visualization.py       # Diagnostic projections and plots
-├── preprocessing.py       # Raw-data conversion entry point
-├── ks20_preprocessing.py  # KS20 data conversion
-├── data.py                # Skeleton loading and graph construction
-├── protocols.py           # Identity and sequence splits
-├── randomness.py          # Run seeds and replay controls
-├── reproduce.py           # Historical OOS evaluation and trial aggregation
-├── params.json            # Final WUT 5C, N=6 configuration
-├── config/
-│   ├── paper/             # Experiment presets
-│   ├── paper_targets.json # Paper reference values
-│   └── trials/            # OOS trial manifests
-├── Datas/                 # Prepared datasets generated locally
-├── weight/                # Trained checkpoints generated locally
-├── results/               # Generated measurements and figures
-├── docs/                  # Data, reproduction, source mapping, and code conventions
-├── tests/                 # Synthetic regression and integration tests
-└── tools/build_release.py # Source archives from an explicit file manifest
-```
-
-## Final model settings
-
-| Parameter | Published value |
-| --- | --- |
-| Sequence length | 6, 12, or 18 frames |
-| Joint count | KGBD 20; KS20 25; WUT 19 |
-| Embedding / layers / attention heads | 128 / 2 / 8 |
-| Spatial / temporal Laplacian dimensions | 10 / 4 |
-| Contrastive / reconstruction branch weights (α / β) | 0.5 / 0.5 |
-| Initial dynamic weight / period / step / ratio threshold | 0.5 / 10 / 0.05 / 10 |
-| Contrastive temperatures | 0.07 / 14 |
-| Optimizer / learning rate / batch size | Adam / 0.00035 / 256 |
-| Main OOS setting | K=1; known-library threshold percentile=95 |
-
-Presets are in `params.json` and `config/paper/`. See the
-[reproduction guide](docs/PAPER_REPRODUCTION.md) for implementation details.
-
-## Note on reproducibility
-
-Each run uses a randomly generated seed by default, so training results may differ
-slightly from those reported in the paper. Hardware, software versions, and data
-splits can also affect results. The selected seed is recorded with the run.
-
-Training defaults to `seed_val=-1` and `fix_seed=0`. Use `--seed_val N` for an
-explicit training seed; `--fix_seed 1` additionally requests deterministic cuDNN
-settings. Preprocessing and OOS evaluation use `--seed -1` by default and
-`--seed N` for an explicit seed. Run seeds do not change fixed split definitions.
-
-No pretrained weights are provided. Train SSGT from scratch and evaluate the
-checkpoints generated by your runs.
 
 ## Prepare and train
-
-Prepared data are stored in `Datas/<dataset>/<length or variant>/`.
 
 For WUT:
 
 ```bash
-python main.py --task preprocess --dataset WUT --length 6 \
-  --input_dir /path/to/WUT
+python main.py --task preprocess --dataset WUT --length 6 --input_dir /path/to/WUT
 python main.py --config params.json --task train
 ```
 
@@ -158,107 +207,141 @@ For KGBD:
 ```bash
 python main.py --task preprocess --dataset KGBD --length 6 \
   --input_dir '/path/to/kinect gait raw dataset'
-python main.py --config config/paper/kgbd_f6.json --task train
+python main.py --config config/kgbd.json --task train
 ```
 
 For KS20 obtained independently:
 
 ```bash
-python main.py --task preprocess --dataset KS20 --length 6 \
-  --input_dir /path/to/KS20
+python main.py --task preprocess --dataset KS20 --length 6 --input_dir /path/to/KS20
 python main.py --config config/paper/ks20_f6.json --task train
 ```
 
-Presets cover WUT 5C/3C/2C, sequence lengths 6/12/18, and frame-rate variants.
-Match the raw fusion file and prepared subdirectory to the chosen preset.
-Dataset splits and input formats are described in the [data guide](docs/DATA.md).
+Match the raw WUT fusion file and prepared subdirectory to the selected 5C, 3C,
+or 2C preset. The [data guide](docs/DATA.md) lists these variants.
 
-Training uses patience 500 by default. `--max_epochs` is inclusive and zero-based:
-`1` permits epochs 0 and 1; `0` disables this additional cap.
+Training writes `best.ckpt` below `weight/<dataset>/<configuration>/`. Its full
+path is printed in the training output. The epoch cap is zero-based and inclusive:
+`--max_epochs 1` allows epochs 0 and 1. With the default `0`, early stopping applies
+within the training loop's 50,000-iteration ceiling.
 
 ## Closed-set identification
+
+Evaluate a checkpoint produced by your training run:
 
 ```bash
 python main.py --task evaluate --ckpt /path/to/best.ckpt \
   --data-dir /path/to/prepared_data --metrics_output results/reid.json
 ```
 
-Evaluation restores the model configuration from the checkpoint and writes
-retrieval metrics to the specified JSON file.
+The checkpoint restores the model configuration. The JSON output contains
+Rank-1, Rank-5, Rank-10, and mAP calculated on the supplied gallery/probe data.
 
-## Out-of-set inference
+## Out-of-set detection
 
-```bash
-python main.py --task oos --ckpt /path/to/wut/best.ckpt \
-  --data-dir /path/to/this_trial_data --unk_knn_k 1
-python main.py --task oos-kgbd --ckpt /path/to/kgbd/best.ckpt \
-  --data-dir /path/to/this_trial_data --unk_knn_k 1
-```
+Unknown identities must be excluded from both training and gallery data. Use the
+same identity split for preparation, training, and evaluation. Example split
+configurations are provided under `config/trials/`.
 
-Exclude unknown identities from both training and gallery data. The paper uses
-two held-out WUT identities or sixteen held-out KGBD identities across five trials.
-Use a checkpoint trained on the matching known-identity split.
+### Train an OOS model
 
-For an external sequence:
-
-```bash
-python main.py --task oos --ckpt /path/to/wut/best.ckpt \
-  --data_source npy --input /path/to/skeleton_sequence.npy
-```
-
-External inputs still require prepared training/gallery data for the feature
-libraries and must follow the training skeleton format. See the
-[data guide](docs/DATA.md) for array shapes and joint order.
-
-## Train an OOS model from scratch
-
-Use the supplied manifests to prepare each identity split, with separate data,
-model, and result directories for each trial:
+Prepare and train one WUT split in separate directories:
 
 ```bash
 python protocols.py --manifest config/trials/wut/exp01.json \
-  --raw-root /path/to/WUT --prepared-root reproduction_runs/wut01/data
+  --raw-root /path/to/WUT --prepared-root runs/wut01/data
 
 python main.py --config config/paper/wut_5c_f6.json --task train \
-  --data-dir reproduction_runs/wut01/data \
-  --model-dir reproduction_runs/wut01/weights
+  --data-dir runs/wut01/data --model-dir runs/wut01/weights
 
 python main.py --task oos --dataset WUT \
-  --data-dir reproduction_runs/wut01/data \
-  --ckpt reproduction_runs/wut01/weights/WUT/probePytorch_6_layers_2_heads_8_alpha_0.5_beta_0.5_lambda_0.5/best.ckpt \
-  --output-dir reproduction_runs/wut01/results --unk_knn_k 1 --proj2d 0
+  --data-dir runs/wut01/data \
+  --ckpt runs/wut01/weights/WUT/probePytorch_6_layers_2_heads_8_alpha_0.5_beta_0.5_lambda_0.5/best.ckpt \
+  --output-dir runs/wut01/results --unk_knn_k 1 --proj2d 0
 ```
 
-Repeat with `exp02.json` through `exp05.json`, keeping separate output roots.
-For KGBD use its manifest, `config/paper/kgbd_f6.json`, and `--task oos-kgbd`.
+Repeat with `exp02.json` through `exp05.json`, using separate data, model, and
+result directories. For KGBD, use its manifest, `config/kgbd.json`, and
+`--task oos-kgbd`. See the [split guide](config/trials/README.md).
 
-OOS metrics use leave-one-out distances in the known training library as ID
-scores; these are calibration scores, not held-out probe scores. Identity
-retrieval uses the gallery, and OOS decisions use the full embedding space.
-
-## Configuration, testing, and packaging
-
-CLI arguments override JSON options. Relative paths in JSON resolve beside the
-configuration file; CLI paths resolve from the working directory. Override the
-default directories with `--data-dir`, `--model-dir`, and `--output-dir`, or
-`SSGT_DATA_DIR`, `SSGT_MODEL_DIR`, and `SSGT_OUTPUT_DIR`.
+### Evaluate unknown or external sequences
 
 ```bash
-python main.py --config params.json --dry-run
-python main.py --task train --help
+python main.py --task oos-kgbd --ckpt /path/to/kgbd/best.ckpt \
+  --data-dir /path/to/trial_data --unk_knn_k 1
+
+python main.py --task oos --ckpt /path/to/wut/best.ckpt \
+  --data-dir /path/to/trial_data \
+  --data_source npy --input /path/to/skeleton_sequence.npy
+```
+
+External sequences must use the model's joint order. Prepared training/gallery
+data are still required to build the feature libraries. OOS calibration uses
+leave-one-out distances in the known training library; identity retrieval uses
+the gallery. OOS decisions use the full embedding space.
+
+## Note on reproducibility
+
+Each run uses a randomly generated seed by default, so training results may differ
+slightly from those reported in the paper. Software, hardware, and data splits can
+also affect results. The selected seed is saved with the run.
+
+Use `--seed_val N` for an explicit training seed, or `--seed N` for preprocessing
+and OOS evaluation. `--fix_seed 1` additionally requests deterministic cuDNN
+settings; it does not select a seed. Run seeds do not change explicit split files.
+
+## Repository layout
+
+```text
+SSGT/
+├── main.py                # JSON configuration and task entry point
+├── SSGT.py                # Spatial and temporal graph encoder
+├── training.py            # Training and closed-set evaluation
+├── loss_balancing.py      # Dynamic loss weights
+├── evaluation.py          # OOS evaluation
+├── evaluation_kgbd.py     # KGBD OOS entry point
+├── preprocessing.py       # WUT/KGBD/KS20 data preparation
+├── ks20_preprocessing.py  # KS20 MATLAB conversion
+├── data.py                # Skeleton loading and graph construction
+├── protocols.py           # OOS identity and sequence splits
+├── retrieval.py           # ReID metrics
+├── randomness.py          # Run seed selection
+├── visualization.py       # Optional result plots
+├── params.json            # Default WUT settings
+├── config/                # Dependencies, dataset presets, and split files
+├── Datas/                 # Prepared data
+├── weight/                # Checkpoints created by training
+├── results/               # Evaluation outputs
+├── docs/                  # Parameter and data guides
+├── tests/                 # Synthetic workflow tests
+└── tools/build_release.py # Source archive builder
+```
+
+## API reference
+
+| Entry point | Purpose |
+| --- | --- |
+| `main.main(argv=None)` | Apply JSON settings and dispatch a task |
+| `training.main(argv=None)` | Train SSGT or evaluate a checkpoint |
+| `preprocessing.main(argv=None)` | Convert raw skeleton recordings |
+| `protocols.prepare_trial(manifest, raw_root, prepared_root)` | Prepare an OOS split without moving raw files |
+| `evaluation.main(argv=None)` | Run OOS detection and identity retrieval |
+| `SSGT.SSGT(...)` | Construct the spatial and temporal graph encoder |
+
+Each task exposes its options through `python main.py --task TASK --help`.
+Parameter definitions are in [docs/HYPERPARAMETERS.md](docs/HYPERPARAMETERS.md);
+data formats are in [docs/DATA.md](docs/DATA.md).
+
+## Testing and packaging
+
+```bash
 python -m unittest discover -s tests -v
 python tools/build_release.py --output-dir ../dist
 ```
 
-Source archives contain the files listed in `RELEASE_FILES.json`.
-Load only trusted checkpoint and NumPy object-array files.
-
-## Documentation
-
-- [Data formats and protocols](docs/DATA.md)
-- [Experiment settings and Python API](docs/PAPER_REPRODUCTION.md)
-- [Validation records](VALIDATION.md)
-- [Module structure](docs/SOURCE_MAP.md) and [code conventions](docs/CODE_STYLE.md)
+The tests use synthetic inputs and require no dataset download or GPU. Source
+archives contain the files listed in `RELEASE_FILES.json`; data and trained
+checkpoints are generated separately.
 
 ## Citation and license
 

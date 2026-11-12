@@ -69,6 +69,22 @@ class EvaluationTests(unittest.TestCase):
         self.assertEqual(metrics["FPR95"], 0.0)
         self.assertAlmostEqual(metrics["AUROC"], 1.0)
 
+    def test_scatter_and_histogram_destinations_are_distinct(self):
+        for module in (evaluation, evaluation_kgbd):
+            for scatter, prefix, expected in (
+                ("plots/custom.png", "unused", "plots/custom_oos_score_hist.png"),
+                ("plots/run_oos_scatter.svg", "unused", "plots/run_oos_score_hist.svg"),
+                ("plots_oos_scatter/custom.png", "unused", "plots_oos_scatter/custom_oos_score_hist.png"),
+                ("", "results/run", "results/run_oos_score_hist.png"),
+                ("", "results/run_oos_scatter", "results/run_oos_scatter_oos_score_hist.png"),
+                ("", "", "oos_oos_score_hist.png"),
+            ):
+                with self.subTest(module=module.__name__, scatter=scatter, prefix=prefix):
+                    histogram = module._score_histogram_path(scatter, prefix)
+                    scatter_destination = scatter or (prefix or "oos") + "_oos_scatter.png"
+                    self.assertEqual(histogram, expected)
+                    self.assertNotEqual(histogram, scatter_destination)
+
     def test_frame_vote_index_conversion_and_tie_break(self):
         spans = np.array([[0, 2], [1, 3]])
         labels = np.array([0, 2])
@@ -149,7 +165,7 @@ class EvaluationTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             evaluation.load_checkpoint_model(path, torch.device("cpu"), "KGBD")
 
-    def test_checkpoint_spatial_encoding_override_and_historical_fallback(self):
+    def test_checkpoint_spatial_encoding_override_and_computed_fallback(self):
         model, args, path = self.checkpoint(spa_pos_type="laplacian")
         computed = np.zeros((20, 3), dtype=np.float32)
         stored = torch.arange(60, dtype=torch.float32).reshape(20, 3)
@@ -167,9 +183,9 @@ class EvaluationTests(unittest.TestCase):
         self.assertEqual(len(restored.spatial_pos_encoding_metadata["float32_sha256"]), 64)
 
         torch.save({"args": args, "model_state": model.state_dict()}, path)
-        historical, _ = evaluation.load_checkpoint_model(path, torch.device("cpu"), "KGBD")
-        np.testing.assert_array_equal(evaluation.resolve_spatial_pos_encoding(historical, computed), computed)
-        self.assertEqual(historical.spatial_pos_encoding_metadata["used_source"], "recomputed_by_data_loader")
+        restored, _ = evaluation.load_checkpoint_model(path, torch.device("cpu"), "KGBD")
+        np.testing.assert_array_equal(evaluation.resolve_spatial_pos_encoding(restored, computed), computed)
+        self.assertEqual(restored.spatial_pos_encoding_metadata["used_source"], "recomputed_by_data_loader")
         for invalid in (np.zeros((19, 3)), np.full((20, 3), np.nan), np.full((20, 3), np.inf)):
             with self.subTest(shape=invalid.shape):
                 torch.save({"args": args, "model_state": model.state_dict(),
@@ -177,7 +193,7 @@ class EvaluationTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     evaluation.load_checkpoint_model(path, torch.device("cpu"), "KGBD")
                 with self.assertRaises(ValueError):
-                    evaluation.resolve_spatial_pos_encoding(historical, invalid)
+                    evaluation.resolve_spatial_pos_encoding(restored, invalid)
 
     def test_missing_npy_input_fails_before_loading_checkpoint(self):
         for module in (evaluation, evaluation_kgbd):
