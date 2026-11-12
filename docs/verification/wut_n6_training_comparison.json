@@ -1,0 +1,124 @@
+{
+  "all_model_state_tensors_finite": true,
+  "best_epoch": 875,
+  "checkpoint_metrics_exactly_match_independent_evaluation": true,
+  "checkpoint_sha256": "5ffa886b7f7aff44c1f1ab19327b54fec405833d58d77772205e2981fbdf6481",
+  "complete_training_epochs": 1001,
+  "cross_environment_bitwise_reproducibility_claimed": false,
+  "dataset": "WUT",
+  "difference_percentage_points": {
+    "R1": -0.2734394124846995,
+    "R5": -0.23671970624234984,
+    "mAP": 0.5831950988111734
+  },
+  "final_evaluated_epoch_index": 1000,
+  "interpretation": "Measured fresh training validation using the documented recovered data split and adopted seed; no parameter changes or early termination based on proximity to the paper results.",
+  "known_identity_count": 25,
+  "last_completed_epoch_index": 1000,
+  "launch_source_snapshot_checksums_valid": true,
+  "loss_balance_updates": [
+    {
+      "completed_epochs": 10,
+      "gpc_slope": 0.05250422861664043,
+      "lambda_after": 0.5,
+      "lambda_before": 0.5,
+      "next_update_epoch": 20,
+      "period": 10,
+      "ratio": 0.5358506177363179,
+      "stpr_slope": 0.09798295808343509
+    },
+    {
+      "completed_epochs": 20,
+      "gpc_slope": 0.03312696540687135,
+      "lambda_after": 0.5,
+      "lambda_before": 0.5,
+      "next_update_epoch": 40,
+      "period": 20,
+      "ratio": 0.6513680794061659,
+      "stpr_slope": 0.05085752043156963
+    },
+    {
+      "completed_epochs": 40,
+      "gpc_slope": 0.029685930728656176,
+      "lambda_after": 0.5,
+      "lambda_before": 0.5,
+      "next_update_epoch": 80,
+      "period": 40,
+      "ratio": 1.019526998760801,
+      "stpr_slope": 0.02911735615117439
+    },
+    {
+      "completed_epochs": 80,
+      "gpc_slope": 0.039779647819299754,
+      "lambda_after": 0.5,
+      "lambda_before": 0.5,
+      "next_update_epoch": 160,
+      "period": 80,
+      "ratio": 2.2977965711146235,
+      "stpr_slope": 0.017312084245997155
+    },
+    {
+      "completed_epochs": 160,
+      "gpc_slope": 0.02923428634458374,
+      "lambda_after": 0.5,
+      "lambda_before": 0.5,
+      "next_update_epoch": 320,
+      "period": 160,
+      "ratio": 2.7708492277932226,
+      "stpr_slope": 0.010550659361522424
+    },
+    {
+      "completed_epochs": 320,
+      "gpc_slope": 0.018998977663827372,
+      "lambda_after": 0.5,
+      "lambda_before": 0.5,
+      "next_update_epoch": 640,
+      "period": 320,
+      "ratio": 3.096139951557571,
+      "stpr_slope": 0.006136343305240315
+    },
+    {
+      "completed_epochs": 640,
+      "gpc_slope": 0.011682655693306045,
+      "lambda_after": 0.5,
+      "lambda_before": 0.5,
+      "next_update_epoch": 1280,
+      "period": 640,
+      "ratio": 3.357619350124822,
+      "stpr_slope": 0.0034794461417646206
+    }
+  ],
+  "metrics": {
+    "R1": 0.799265605875153,
+    "R10": 0.9302325581395349,
+    "R5": 0.8996328029375765,
+    "mAP": 0.5958319509881117
+  },
+  "metrics_percent": {
+    "R1": 79.92656058751531,
+    "R10": 93.02325581395348,
+    "R5": 89.96328029375765,
+    "mAP": 59.58319509881117
+  },
+  "paper_WUT5C_N6_metrics": {
+    "R1": 0.802,
+    "R5": 0.902,
+    "mAP": 0.59
+  },
+  "paper_exact_reproduction_claimed": false,
+  "paper_reference_percent": {
+    "R1": 80.2,
+    "R5": 90.2,
+    "mAP": 59.0
+  },
+  "probe_identity_count": 24,
+  "seed": 42,
+  "seed_provenance": "adopted reproducibility setting; paper does not specify its numeric seed",
+  "sequence_length": 6,
+  "spatial_encoding_captured_from_training_and_used_at_evaluation": true,
+  "status": "completed_and_independently_verified",
+  "stop_reason": "maximum_epoch_index",
+  "training_data_checksums_unchanged": true,
+  "training_seconds": 4805.707243515,
+  "unknown_identities_in_training": false
+}

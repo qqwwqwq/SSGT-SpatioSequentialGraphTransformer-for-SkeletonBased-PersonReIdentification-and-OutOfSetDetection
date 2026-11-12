@@ -1,0 +1,2 @@
+# Main dependencies are grouped with configuration files, as in DualSOM.
+-r config/requirements.txt

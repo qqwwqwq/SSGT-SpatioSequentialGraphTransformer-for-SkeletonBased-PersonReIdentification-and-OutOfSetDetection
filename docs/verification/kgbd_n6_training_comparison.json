@@ -1,0 +1,47 @@
+{
+  "best_epoch": 196,
+  "checkpoint_sha256": "65aa1ec0ee40bf08fd340d828574f5586fd722726aef01b0eaaf9b6899b3ffd1",
+  "completed_training_epochs": 201,
+  "dataset": "KGBD",
+  "difference_percentage_points": {
+    "R1": 6.461379735140127,
+    "R5": 4.4847859562673165,
+    "mAP": 5.222316159233536
+  },
+  "evaluation_sha256": "ad09332fda5294678cfcd067635f0526d0037f5d2d6024e979fa111513681ee4",
+  "limitations": [
+    "One adopted seed (42); the paper does not specify its numeric seed.",
+    "The maximum epoch index 200 is a predeclared validation budget, not a paper-specific or full-convergence claim.",
+    "Training-time probe evaluation selects the checkpoint, matching the released protocol.",
+    "No hyperparameters, seed, or epoch budget were tuned to the paper targets.",
+    "The original partial diagnostic run was preserved; the restart used an exactly validated retrieval optimization."
+  ],
+  "metrics_percent": {
+    "R1": 68.16137973514013,
+    "R5": 80.18478595626732,
+    "mAP": 30.722316159233536
+  },
+  "paper_reference_percent": {
+    "R1": 61.7,
+    "R5": 75.7,
+    "mAP": 25.5
+  },
+  "prepared_data_unchanged": true,
+  "run_metadata_sha256": "4614b815599b3884aaa6fe1fe6c1aa99a2c4ba84d49cddf1cc1d1fb84ab045a2",
+  "saved_metric_parity_by_metric": {
+    "R1": true,
+    "R10": true,
+    "R5": true,
+    "mAP": true
+  },
+  "saved_metrics_match_independent_evaluation": true,
+  "sequence_length": 6,
+  "status": "fresh_training_independently_evaluated",
+  "training_budget": {
+    "max_epoch_index_inclusive": 200,
+    "patience": 500,
+    "reason": "Validation budget fixed before training; not paper-specified or a full-convergence claim"
+  },
+  "training_seconds": 4507.013958023999,
+  "training_seed": 42
+}

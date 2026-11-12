@@ -1,0 +1,40 @@
+{
+  "best_epoch": 208,
+  "checkpoint_sha256": "edc7266c4e6b0b466349649333401846eda4df50ccf1aa342e71075fa6b0b90d",
+  "dataset": "KS20",
+  "difference_percentage_points": {
+    "R1": -1.8055045871559656,
+    "R5": -2.7917431192660587,
+    "mAP": -0.870527751183289
+  },
+  "evaluation_sha256": "7541d63573b0cef5fd519262bfb6fbcc251ff45cec50b6186569337f71940dfd",
+  "limitations": [
+    "One adopted seed (42); the paper does not report its numeric seed.",
+    "Training-time probe evaluation selects the checkpoint, matching the released protocol.",
+    "No hyperparameters or random seeds were tuned to the paper targets."
+  ],
+  "metrics_percent": {
+    "R1": 73.39449541284404,
+    "R5": 89.90825688073394,
+    "mAP": 54.12947224881671
+  },
+  "paper_reference_percent": {
+    "R1": 75.2,
+    "R5": 92.7,
+    "mAP": 55.0
+  },
+  "raw_prepared_parity": "All 15 regenerated files are byte-identical to the prepared KS20 data.",
+  "run_metadata_sha256": "70ec540d1e177ffa589f735ad4a4948fd4210665af33c42a1c1c9570c4a4fe94",
+  "saved_metrics_match_independent_evaluation": true,
+  "sequence_length": 6,
+  "status": "fresh_training_independently_evaluated",
+  "stopping": {
+    "last_completed_training_epoch": 707,
+    "last_evaluated_epoch": 708,
+    "max_epochs_inclusive": 1000,
+    "patience": 500,
+    "stopped_by": "patience"
+  },
+  "training_seconds": 563.864008092,
+  "training_seed": 42
+}

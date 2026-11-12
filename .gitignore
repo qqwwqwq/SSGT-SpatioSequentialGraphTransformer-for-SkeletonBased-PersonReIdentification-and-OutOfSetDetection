@@ -1,0 +1,39 @@
+# Python and local environments
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+*.egg-info/
+build/
+dist/
+.coverage
+htmlcov/
+
+# Editors and local credentials
+.idea/
+.vscode/
+.DS_Store
+.env
+.env.*
+
+# Data, learned parameters, and generated figures stay outside source control.
+raw/
+dataset_info/
+Datas/*
+!Datas/README.md
+weight/*
+!weight/README.md
+results/*
+!results/README.md
+reproduction_runs/
+*.npy
+*.npz
+*.ckpt
+*.pth
+*.pt
+*.pkl
+*.log
+*.mp4
+*.mkv
+*.avi

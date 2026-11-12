@@ -1,0 +1,10 @@
+{
+  "description": "Zero-based positions in each identity's alphabetically sorted sequence directories. All remaining positions are training sequences.",
+  "gallery_indices": [
+    8,
+    0
+  ],
+  "probe_indices": [
+    1
+  ]
+}

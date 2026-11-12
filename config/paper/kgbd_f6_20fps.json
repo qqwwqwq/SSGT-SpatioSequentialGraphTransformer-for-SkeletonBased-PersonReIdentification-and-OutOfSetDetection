@@ -1,0 +1,55 @@
+{
+  "task": "train",
+  "paths": {
+    "data_dir": "../../Datas",
+    "model_dir": "../../weight",
+    "output_dir": "../../results"
+  },
+  "train": {
+    "H": 128,
+    "n_heads": 8,
+    "L_transformer": 2,
+    "enc_k_spa": 10,
+    "enc_k_time": 4,
+    "spa_pos_type": "laplacian",
+    "pos_enc": 1,
+    "use_time_attn": 1,
+    "frame_attn_pool": 0,
+    "seq_lambda": 0.5,
+    "prompt_lambda": 0.5,
+    "GPC_lambda": 0.5,
+    "t_1": 0.07,
+    "t_2": 14.0,
+    "learnable_temp": 0,
+    "lr": 0.00035,
+    "batch_size": 256,
+    "enable_dynamic_gpc": 1,
+    "gpc_up_period": 10,
+    "gpc_iota": 10.0,
+    "gpc_tau": 0.05,
+    "fix_seed": 0,
+    "seed_val": -1,
+    "max_epochs": 0,
+    "patience": 500,
+    "train_eval_gallery": "split",
+    "metric": "euclidean",
+    "gpu": "0",
+    "dataset": "KGBD",
+    "length": 6,
+    "data_subdir": "6_20fps"
+  },
+  "evaluate": {
+    "dataset": "KGBD",
+    "length": 6,
+    "data_subdir": "6_20fps"
+  },
+  "oos-kgbd": {
+    "dataset": "KGBD",
+    "data_subdir": "6_20fps",
+    "data_source": "unknown",
+    "proto_source": "gallery",
+    "unk_knn_k": 1,
+    "unk_sigma": 0.95,
+    "sigma_eval": 0.95
+  }
+}

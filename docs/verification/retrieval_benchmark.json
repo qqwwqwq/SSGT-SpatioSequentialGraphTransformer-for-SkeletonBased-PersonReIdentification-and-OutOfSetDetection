@@ -1,0 +1,64 @@
+{
+  "python": "3.7.13 (default, Mar 29 2022, 02:18:16) \n[GCC 7.5.0]",
+  "numpy": "1.19.2",
+  "sklearn": "0.24.2",
+  "torch": "1.13.1+cu117",
+  "shape": [
+    1024,
+    29720
+  ],
+  "distance_seconds": 0.07022889600011695,
+  "baseline_metric_seconds": 7.838956849999704,
+  "baseline_metrics": [
+    0.4701436589787322,
+    0.9931640625,
+    0.9990234375,
+    1.0
+  ],
+  "workers": {
+    "1": {
+      "seconds": 3.0765262410000105,
+      "speedup": 2.5479895947358107,
+      "exact_metrics": true
+    },
+    "2": {
+      "seconds": 1.6002606980000564,
+      "speedup": 4.898549879901773,
+      "exact_metrics": true
+    },
+    "4": {
+      "seconds": 0.9286496999998235,
+      "speedup": 8.441241999002632,
+      "exact_metrics": true
+    },
+    "8": {
+      "seconds": 0.9651554679999208,
+      "speedup": 8.121962844228891,
+      "exact_metrics": true
+    }
+  },
+  "batch_size": 32,
+  "default_workers": 4,
+  "distance_metric": "unchanged CPU torch Euclidean distance function",
+  "feature_source": "Archived KGBD exp_01 calibration features; 1024 seed-117 query rows against all 29720 gallery rows; original labels restored after seed-42 permutation",
+  "bitwise_equal": true,
+  "sklearn_trim_full_recall": true,
+  "source_sha256": {
+    "retrieval.py": "09f4e40f243b1d1411dc432f030a2607be8b762d64d4d8d36dc60663e0465b9c",
+    "untouched_metric_functions.py": "a9a5705fe4e855202dd3c95e06a20ee8868178fadde39dcfcf777c7abcb9891b"
+  },
+  "cpu_affinity_count": 28,
+  "cpu_torch_threads": 4,
+  "distance_dtype": "float32",
+  "feature_dimension": 128,
+  "query_selection_seed": 117,
+  "training_label_permutation_seed": 42,
+  "query_rows_are_subset_of_gallery": true,
+  "protocol": {
+    "special_skip_first": false,
+    "remove_zero_same_id": true,
+    "zero_eps": 1e-06,
+    "camera_filter": false
+  },
+  "calibration_features_sha256": "6bac6bcfbbaff5469542e0cf518a0f08aae8a7ce82328521c01abaa6de7fe252"
+}

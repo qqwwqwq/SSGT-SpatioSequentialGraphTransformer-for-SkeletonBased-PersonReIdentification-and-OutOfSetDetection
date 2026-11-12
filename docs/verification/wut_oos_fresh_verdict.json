@@ -1,0 +1,62 @@
+{
+  "identity_labels": {
+    "indexing": "one_based",
+    "known_original_ids": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24
+    ],
+    "unknown_id": 26
+  },
+  "spatial_position_encoding": {
+    "used_source": "checkpoint",
+    "checkpoint_provenance": {
+      "source": "captured_from_training_loader",
+      "dataset": "WUT",
+      "sequence_length": 6,
+      "data_subdir": "6",
+      "encoding_width": 10
+    },
+    "shape": [
+      19,
+      10
+    ],
+    "float32_sha256": "186efbb46afa9efbd8c2bafc1cb563546c99b056d55c74a50d5597c055685293"
+  },
+  "data_source": "unknown",
+  "probe_desc": "split='unknown'",
+  "unk_detect_enabled": true,
+  "unk_method": "knn",
+  "unk_scope": "window",
+  "oos_lib_source": "train",
+  "k": 1,
+  "sigma_for_oos": 0.95,
+  "tau_for_oos": 0.3704398423433303,
+  "num_windows": 376,
+  "num_oos_windows": 353,
+  "eval_sigma": 0.95,
+  "eval_tau": 0.3704398423433303,
+  "TPR_ID_at_tau": 0.9499780412823892,
+  "FPR95": 0.061170212765957445,
+  "AUROC": 0.9849214859043721
+}

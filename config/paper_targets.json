@@ -1,0 +1,171 @@
+{
+  "publication": {
+    "title": "SSGT: Spatio-Sequential Graph Transformer for Skeleton-Based Person Re-Identification and Out-of-Set Detection",
+    "doi": "10.1109/LRA.2026.3734851",
+    "pdf_sha256": "3132dd3b995879ffa907d8f9630648991dbb0f25fbeee481b947d098c6ade315"
+  },
+  "units": "percent",
+  "in_set": [
+    {
+      "preset": "kgbd_f6",
+      "table": "II",
+      "R1": 61.7,
+      "R5": 75.7,
+      "mAP": 25.5
+    },
+    {
+      "preset": "ks20_f6",
+      "table": "II",
+      "R1": 75.2,
+      "R5": 92.7,
+      "mAP": 55.0
+    },
+    {
+      "preset": "wut_5c_f6",
+      "table": "II",
+      "R1": 80.2,
+      "R5": 90.2,
+      "mAP": 59.0
+    },
+    {
+      "preset": "wut_3c_f6",
+      "table": "II",
+      "R1": 72.9,
+      "R5": 86.5,
+      "mAP": 52.9
+    },
+    {
+      "preset": "wut_2c_f6",
+      "table": "II",
+      "R1": 77.9,
+      "R5": 88.3,
+      "mAP": 57.9
+    },
+    {
+      "preset": "kgbd_f12",
+      "table": "III",
+      "R1": 64.7,
+      "R5": 79.6,
+      "mAP": 29.2
+    },
+    {
+      "preset": "wut_5c_f12",
+      "table": "III",
+      "R1": 84.5,
+      "R5": 91.4,
+      "mAP": 67.0
+    },
+    {
+      "preset": "kgbd_f18",
+      "table": "III",
+      "R1": 64.3,
+      "R5": 81.3,
+      "mAP": 30.4
+    },
+    {
+      "preset": "wut_5c_f18",
+      "table": "III",
+      "R1": 85.6,
+      "R5": 93.2,
+      "mAP": 72.5
+    },
+    {
+      "preset": "kgbd_f6_10fps",
+      "table": "IV",
+      "R1": 63.6,
+      "R5": 80.7,
+      "mAP": 28.4
+    },
+    {
+      "preset": "kgbd_f6_20fps",
+      "table": "IV",
+      "R1": 63.2,
+      "R5": 77.7,
+      "mAP": 25.8
+    },
+    {
+      "preset": "wut_5c_f6_5fps",
+      "table": "IV",
+      "R1": 75.5,
+      "R5": 89.5,
+      "mAP": 62.0
+    },
+    {
+      "preset": "wut_5c_f6_10fps",
+      "table": "IV",
+      "R1": 79.7,
+      "R5": 92.3,
+      "mAP": 58.5
+    }
+  ],
+  "oos": {
+    "reference": "Figure 5; precise values from the original figure-generation arrays in AURoc.py. K=1 was also verified against five archived trial summaries.",
+    "k_values": [
+      1,
+      5,
+      20,
+      50,
+      200
+    ],
+    "WUT": {
+      "AUROC_mean": [
+        98.83,
+        97.41,
+        93.83,
+        92.99,
+        92.49
+      ],
+      "AUROC_sample_std": [
+        0.37,
+        0.71,
+        1.98,
+        2.23,
+        2.59
+      ],
+      "FPR95_mean": [
+        5.79,
+        16.0,
+        22.76,
+        25.03,
+        26.25
+      ],
+      "FPR95_sample_std": [
+        2.87,
+        4.22,
+        5.14,
+        5.69,
+        6.39
+      ]
+    },
+    "KGBD": {
+      "AUROC_mean": [
+        97.91,
+        93.86,
+        88.08,
+        80.29,
+        63.55
+      ],
+      "AUROC_sample_std": [
+        0.31,
+        1.09,
+        2.03,
+        3.44,
+        4.56
+      ],
+      "FPR95_mean": [
+        10.55,
+        40.62,
+        63.95,
+        75.5,
+        85.11
+      ],
+      "FPR95_sample_std": [
+        1.77,
+        8.06,
+        8.54,
+        7.31,
+        8.57
+      ]
+    }
+  }
+}

@@ -1,0 +1,36 @@
+cff-version: 1.2.0
+message: "If you use SSGT, please cite the associated paper."
+title: "SSGT: Spatio-Sequential Graph Transformer for Skeleton-Based Person Re-Identification and Out-of-Set Detection"
+type: software
+authors:
+  - family-names: He
+    given-names: Xin
+  - family-names: Dutta
+    given-names: Vibekananda
+  - family-names: Zielinska
+    given-names: Teresa
+  - family-names: Matsumaru
+    given-names: Takafumi
+  - family-names: Sitnik
+    given-names: Robert
+preferred-citation:
+  type: article
+  title: "SSGT: Spatio-Sequential Graph Transformer for Skeleton-Based Person Re-Identification and Out-of-Set Detection"
+  authors:
+    - family-names: He
+      given-names: Xin
+    - family-names: Dutta
+      given-names: Vibekananda
+    - family-names: Zielinska
+      given-names: Teresa
+    - family-names: Matsumaru
+      given-names: Takafumi
+    - family-names: Sitnik
+      given-names: Robert
+  journal: IEEE Robotics and Automation Letters
+  year: 2026
+  volume: 11
+  issue: 11
+  start: 12727
+  end: 12734
+  doi: 10.1109/LRA.2026.3734851

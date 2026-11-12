@@ -1,0 +1,18 @@
+{
+  "evaluation_seconds": 20.826352584999768,
+  "checkpoint_epoch": 0,
+  "saved_metrics": {
+    "R1": 0.1823221435170927,
+    "R5": 0.3646442870341854,
+    "R10": 0.4592546966430551,
+    "mAP": 0.03040696123362699
+  },
+  "optimized_evaluation_metrics": {
+    "R1": 0.1823221435170927,
+    "R10": 0.4592546966430551,
+    "R5": 0.3646442870341854,
+    "mAP": 0.03040696123362699
+  },
+  "bitwise_equal_python_float_metrics": true,
+  "spatial_encoding_source": "checkpoint"
+}
