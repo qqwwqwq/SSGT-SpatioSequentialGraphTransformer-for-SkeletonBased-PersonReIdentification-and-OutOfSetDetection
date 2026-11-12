@@ -5,7 +5,7 @@
 ![Python](https://img.shields.io/badge/Default_Python-3.10_%7C_3.11-3776AB?style=flat-square&logo=python&logoColor=white)
 ![PyTorch](https://img.shields.io/badge/PyTorch-%3E%3D1.13.1-EE4C2C?style=flat-square&logo=pytorch&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)
-[![Tests](https://github.com/qqwwqwq/SSGT/actions/workflows/tests.yml/badge.svg)](https://github.com/qqwwqwq/SSGT/actions/workflows/tests.yml)
+[![Tests](https://github.com/qqwwqwq/SSGT-SpatioSequentialGraphTransformer-for-SkeletonBased-PersonReIdentification-and-OutOfSetDetection/actions/workflows/tests.yml/badge.svg)](https://github.com/qqwwqwq/SSGT-SpatioSequentialGraphTransformer-for-SkeletonBased-PersonReIdentification-and-OutOfSetDetection/actions/workflows/tests.yml)
 
 ## Paper
 
@@ -21,7 +21,7 @@ Duration: 3 min 21 s, with English narration and subtitles.
 https://github.com/user-attachments/assets/bb093a94-6c90-4a86-b90e-16c2bb76c52a
 
 Enable sound in the player for the narration. You can also
-[download the original MP4](https://github.com/qqwwqwq/SSGT/raw/refs/heads/main/docs/media/video-RAL2026.mp4).
+[download the original MP4](https://github.com/qqwwqwq/SSGT-SpatioSequentialGraphTransformer-for-SkeletonBased-PersonReIdentification-and-OutOfSetDetection/raw/refs/heads/main/docs/media/video-RAL2026.mp4).
 
 ## Table of contents
 
@@ -40,7 +40,6 @@ Enable sound in the player for the narration. You can also
 - [Out-of-set inference](#out-of-set-inference)
 - [Train an OOS model from scratch](#train-an-oos-model-from-scratch)
 - [Configuration, testing, and packaging](#configuration-testing-and-packaging)
-- [Limitations](#limitations)
 - [API and code conventions](#api-and-code-conventions)
 - [Citation and license](#citation-and-license)
 
@@ -353,17 +352,6 @@ Source archives contain only the explicit `RELEASE_FILES.json` entries. Datasets
 checkpoints, private experiment logs, local environments, videos, and Cursor
 conversation history are excluded. Load only trusted checkpoint and NumPy
 object-array files.
-
-## Limitations
-
-The release supports the stated WUT/KGBD/KS20 skeleton formats and protocols.
-Dataset packages are distributed separately under their own access conditions;
-checkpoint binaries are not included. Probe Rank-1
-selects checkpoints in the inherited workflow; there is no separate validation
-identity split. The earlier measurements cover selected N=6 runs and archived
-OOS evaluations. They do not cover every configuration or repeated runs under
-the new random-seed defaults.
-See [VALIDATION.md](VALIDATION.md) for unresolved differences and measurement scope.
 
 ## API and code conventions
 

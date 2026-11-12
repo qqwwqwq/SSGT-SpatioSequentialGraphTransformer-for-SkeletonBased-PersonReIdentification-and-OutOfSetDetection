@@ -159,7 +159,7 @@ OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 \
 Additional checks compare original/reorganized encoder outputs and raw conversion,
 verify original-source hashes, and validate the explicit archive allowlist.
 Local validation above is separate from CI runs after publication; see
-[repository Actions](https://github.com/qqwwqwq/SSGT/actions/workflows/tests.yml)
+[repository Actions](https://github.com/qqwwqwq/SSGT-SpatioSequentialGraphTransformer-for-SkeletonBased-PersonReIdentification-and-OutOfSetDetection/actions/workflows/tests.yml)
 for current checks. No raw data or checkpoint binary is bundled in the source
 archives.
 
