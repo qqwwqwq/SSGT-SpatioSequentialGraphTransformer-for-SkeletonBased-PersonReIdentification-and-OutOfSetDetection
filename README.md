@@ -205,38 +205,12 @@ Explicit seeds do not guarantee identical results across devices or versions.
 
 ## Measured training checks
 
-The following measurements were obtained on 2026-11-12 with the **previous
-fixed-seed version**, using seed 42 on the three main N=6 settings. They are
-retained as historical validation evidence. The full training benchmarks have
-**not been rerun with the new random-seed defaults or the subsequent
-temporal-eigenbasis determinism fix**. Each selected checkpoint was evaluated
-again after loading; measurements remain separate from paper reference values.
-Saved checkpoints retain their recorded temporal encoding (`time_pe`) when loaded;
-the fix changes its construction for new models, not the stored checkpoint values.
+Training uses a newly generated random seed for each run by default. Actual
+training results may therefore differ slightly from those reported in the paper.
 
-| Dataset | Paper R1 / R5 / mAP (%) | Local R1 / R5 / mAP (%) |
-| --- | --- | --- |
-| WUT 5C | 80.2 / 90.2 / 59.0 | **79.93 / 89.96 / 59.58** |
-| KS20 | 75.2 / 92.7 / 55.0 | **73.39 / 89.91 / 54.13** |
-| KGBD | 61.7 / 75.7 / 25.5 | **68.16 / 80.18 / 30.72** |
-
-WUT and KS20 are close to the reference scores. KGBD is higher by
-6.46 / 4.48 / 5.22 percentage points; its fixed 201-epoch validation run does
-not establish an exact reproduction of the paper's numerical results.
-
-A separate fresh WUT OOS trial reached **98.49% AUROC / 6.12% FPR95**
-with K=1 and P=95. It is one training trial, not a five-trial mean.
-
-The current **81-test regression suite passes locally in both CPU environments**,
-including repeated temporal-eigenbasis construction and strict explicit-seed
-replay. See the [Python 3.10](docs/verification/test-suite-temporal-encoding-python310.json)
-and [Python 3.7](docs/verification/test-suite-temporal-encoding-python37.json)
-records. These checks are separate from the earlier full GPU benchmarks.
-The [validation report](VALIDATION.md) links
-the test evidence and provides exact training limits, data and checkpoint hashes,
-actual metrics, and unresolved differences. The reported GPU results are
-individual fixed-seed checks, not a complete repetition of every paper table
-or all five OOS trainings. Checkpoint binaries are not bundled.
+This repository provides the code and instructions to prepare data, train SSGT
+from scratch, and evaluate your own checkpoints. No pretrained weights are
+provided. Follow [Prepare and train](#prepare-and-train) to run the workflow.
 
 ## Prepare and train
 
